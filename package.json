@@ -1,9 +1,9 @@
 {
     "name": "vscode-magento-xml",
-    "displayName": "VSCode Magento XML Tools",
-    "description": "Magento XML Support",
+    "displayName": "Magento XML",
+    "description": "Magento XML Support for VS Code",
     "version": "0.0.1",
-    "publisher": "sergiy",
+    "publisher": "sergiyyur",
     "engines": {
         "vscode": "^1.90.0"
     },
