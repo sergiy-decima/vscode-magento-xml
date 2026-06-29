@@ -1,4 +1,4 @@
-# VS Code Extension for Magento XML Support
+# Magento XML Extension for VS Code
 VSCode Magento XML Support
 
 If you have a project with Magento subdirectory, for example:
