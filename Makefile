@@ -6,7 +6,7 @@ help:
 	@echo "  stop    - Stop containers"
 	@echo "  down    - Stop and remove containers"
 	@echo "  compile - Compile the project using npm"
-	@echo "  package - Package the extension into a .vsix file"
+	@echo "  package - Package the extension into a *.vsix file"
 	@echo "  clean   - Remove generated files and *.vsix packages"
 	@echo "  bash    - Open a bash shell in the node container"
 

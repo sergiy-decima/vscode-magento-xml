@@ -3,7 +3,7 @@
     "displayName": "VSCode Magento XML Tools",
     "description": "Magento XML Support",
     "version": "0.0.1",
-    "publisher": "sergey.yur@gmail.com",
+    "publisher": "sergiy",
     "engines": {
         "vscode": "^1.90.0"
     },
