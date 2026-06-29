@@ -1,0 +1,11 @@
+services:
+  node:
+    build: .
+    container_name: vscode-magento-node
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      - COMPOSE_PROJECT_NAME=vscode-magento-xml
+    stdin_open: true
+    tty: true

@@ -1,3 +1,7 @@
+# My .gitignore file for Node.js projects 
+.DS_Store
+*.vsix
+
 # Logs
 logs
 *.log

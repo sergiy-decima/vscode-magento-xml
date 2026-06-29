@@ -1,0 +1,29 @@
+{
+    "name": "vscode-magento-xml",
+    "displayName": "VSCode Magento XML Tools",
+    "description": "Magento XML Support",
+    "version": "0.0.1",
+    "publisher": "sergey.yur@gmail.com",
+    "engines": {
+        "vscode": "^1.90.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "main": "./out/extension.js",
+    "activationEvents": [
+        "onLanguage:xml"
+    ],
+    "contributes": {},
+    "scripts": {
+        "compile": "tsc -p .",
+        "package": "vsce package",
+        "watch": "tsc -watch -p ."
+    },
+    "devDependencies": {
+        "@types/node": "^22.20.0",
+        "@types/vscode": "^1.90.0",
+        "@vscode/vsce": "^3.6.2",
+        "typescript": "^5.8"
+    }
+}
