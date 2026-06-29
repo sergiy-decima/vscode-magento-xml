@@ -1,5 +1,5 @@
 # Magento XML Extension for VS Code
-VSCode Magento XML Support
+Magento XML Support for VS Code
 
 If you have a project with Magento subdirectory, for example:
 
@@ -42,4 +42,4 @@ This command rebuilds the composer classmap.
 # How to install the extension?
 1. Install docker desktop & run it
 2. Run `make build package`
-3. Install the generated `*.vsix` file into VS Code as an extension
+3. Install the generated `*.vsix` file into VS Code as an extension 'Install from VSIX...'
