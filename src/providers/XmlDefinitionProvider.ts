@@ -9,8 +9,7 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
     async provideDefinition(
         document: vscode.TextDocument,
         position: vscode.Position
-    ): Promise<vscode.Definition | undefined>
-    {
+    ): Promise<vscode.Definition | undefined> {
         const range = document.getWordRangeAtPosition(position, /[A-Za-z0-9_\\]+/);
 
         if (!range) {
@@ -19,24 +18,19 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
         }
 
         const word = document.getText(range);
-        console.log("WORD =", word);
+        // console.log("WORD =", word);
         const found = this.index.find(word);
-        console.log("FOUND =", found);
+        // console.log("FOUND =", found);
 
         if (!found) {
             return;
         }
 
-        // console.log(found.uri.toString());
-        // console.log(found.uri.fsPath);
-        // console.log(found.line);
-
-        // const doc = await vscode.workspace.openTextDocument(found.uri);
-        // await vscode.window.showTextDocument(doc);
+        const doc = await vscode.workspace.openTextDocument(found.uri);
 
         return new vscode.Location(
             found.uri,
-            new vscode.Position(found.line, 0)
+            doc.positionAt(found.offset)
         );
     }
 }

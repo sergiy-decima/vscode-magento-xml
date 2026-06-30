@@ -3,59 +3,46 @@ import * as vscode from "vscode";
 export interface PhpClass {
     fqcn: string;
     uri: vscode.Uri;
-    line: number;
+    offset: number;
+    length: number;
 }
 
-export class ClassIndex {
-    private map = new Map<string, PhpClass>();
+export class ClassIndex 
+{
+    private readonly map = new Map<string, PhpClass>();
 
-    async build() {
+    public async build(): Promise<void> {
+        this.map.clear();
         const files = await vscode.workspace.findFiles("**/*.php");
-        // console.log(files);
         for (const file of files) {
-            // console.log("File", file.path);
             const doc = await vscode.workspace.openTextDocument(file);
-            let namespace = "";
-            for (let i = 0; i < doc.lineCount; i++) {
-                const line = doc.lineAt(i).text.trim();
-                const ns = line.match(/^namespace\s+(.+);/);
-                if (ns) {
-                    namespace = ns[1];
-                    continue;
-                }
+            const text = doc.getText();
+            const namespaceMatch = text.match(/namespace\s+([^;]+);/);
+            const namespace = namespaceMatch ? namespaceMatch[1].trim() : "";
+            const regex = /(class|interface|trait|enum)\s+([A-Za-z_][A-Za-z0-9_]*)/g;
 
-                const cls = line.match(/^(class|interface|trait|enum)\s+([A-Za-z0-9_]+)/);
-                if (cls) {
-                    const name = cls[2];
-                    const fqcn = namespace ? namespace + "\\" + name : name;
-                    this.map.set(fqcn, {
-                        fqcn,
-                        uri: file,
-                        line: i
-                    });
-                    break;
-                }
+            let match: RegExpExecArray | null;
+            while ((match = regex.exec(text)) !== null) {
+                const name = match[2];
+                const fqcn = namespace ? `${namespace}\\${name}` : name;
+                this.map.set(fqcn, {
+                    fqcn,
+                    uri: file,
+                    offset: match.index,
+                    length: match[0].length
+                });
+                break;
             }
         }
 
         console.log(`Indexed classes: ${this.map.size}`);
-
-        // console.log("=== FIRST 20 CLASSES ===");
-        // let i = 0;
-        // for (const cls of this.map.values()) {
-        //     console.log(cls.fqcn);
-
-        //     if (++i >= 20) {
-        //         break;
-        //     }
-        // }
     }
 
-    find(fqcn: string) {
+    public find(fqcn: string): PhpClass | undefined {
         return this.map.get(fqcn);
     }
 
-    all() {
+    public all(): PhpClass[] {
         return [...this.map.values()];
     }
 }

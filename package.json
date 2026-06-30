@@ -19,6 +19,10 @@
       {
         "command": "magento.refreshIndex",
         "title": "Magento: Refresh Index"
+      },
+      {
+        "command": "magento.goToDi",
+        "title": "Magento: Go To DI"
       }
     ]
   },
@@ -28,8 +32,12 @@
     "package": "vsce package"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.9.3",
+    "xml2js": "^0.6.2"
   }
 }
