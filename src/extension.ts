@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ClassIndex } from "./indexer/ClassIndex";
+import { ClassIndex } from "./index/ClassIndex";
 import { XmlDefinitionProvider } from "./providers/XmlDefinitionProvider";
 import { XmlCompletionProvider } from "./providers/XmlCompletionProvider";
 

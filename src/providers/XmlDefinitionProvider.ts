@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ClassIndex } from "../indexer/ClassIndex";
+import { ClassIndex } from "../index/ClassIndex";
 import { extractWord } from "../utils/PhpParser";
 
 export class XmlDefinitionProvider implements vscode.DefinitionProvider 
