@@ -26,7 +26,7 @@ stop:
 down:
 	docker compose down
 
-compile:
+compile: clean
 	docker compose exec node npm run compile
 
 bash:

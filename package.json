@@ -1,29 +1,35 @@
 {
-    "name": "vscode-magento-xml",
-    "displayName": "Magento XML",
-    "description": "Magento XML Support for VS Code",
-    "version": "0.0.1",
-    "publisher": "sergiyyur",
-    "engines": {
-        "vscode": "^1.90.0"
-    },
-    "categories": [
-        "Programming Languages"
-    ],
-    "main": "./out/extension.js",
-    "activationEvents": [
-        "onLanguage:xml"
-    ],
-    "contributes": {},
-    "scripts": {
-        "compile": "tsc -p .",
-        "package": "vsce package",
-        "watch": "tsc -watch -p ."
-    },
-    "devDependencies": {
-        "@types/node": "^22.20.0",
-        "@types/vscode": "^1.90.0",
-        "@vscode/vsce": "^3.6.2",
-        "typescript": "^5.8"
-    }
+  "name": "magento-vscode-tools",
+  "displayName": "Magento VSCode Tools",
+  "description": "Magento XML + PHP navigation tools",
+  "version": "0.0.1",
+  "publisher": "local-dev",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "magento.refreshIndex",
+        "title": "Magento: Refresh Index"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
 }

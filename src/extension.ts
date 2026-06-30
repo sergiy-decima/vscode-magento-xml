@@ -1,51 +1,42 @@
-import * as vscode from 'vscode';
-import { ComposerPsr4Index } from './indexer/composerPsr4Index';
-import { MagentoCompletionProvider } from './providers/completionProvider';
-import { XmlClassResolver } from './xml/xmlClassResolver';
-import { ComposerIndex } from './indexer/composerIndex';
+import * as vscode from "vscode";
+import { ClassIndex } from "./indexer/ClassIndex";
+import { XmlDefinitionProvider } from "./providers/XmlDefinitionProvider";
+import { XmlCompletionProvider } from "./providers/XmlCompletionProvider";
 
-let index: ComposerPsr4Index;
-let composerIndex: ComposerIndex;
+let index = new ClassIndex();
 
-export async function activate(context: vscode.ExtensionContext) 
-{
-    index = new ComposerPsr4Index();
+export async function activate(context: vscode.ExtensionContext) {
+
+    console.log("Magento VSCode Tools activated");
+
+    // 🔥 1. будуємо індекс одразу при старті
     await index.build();
+    console.log("Class index ready");
 
-    composerIndex = new ComposerIndex();
-    await composerIndex.build();
+    // 🔥 2. Definition provider (Ctrl+Click)
+    const definition = vscode.languages.registerDefinitionProvider(
+        { scheme: "file", language: "xml" },
+        new XmlDefinitionProvider(index)
+    );
 
-    const provider = vscode.languages.registerDefinitionProvider(
-        { language: 'xml' },
-        {
-            provideDefinition(document, position) {
-                const resolver = new XmlClassResolver();
-                const fqcn = resolver.getClassAtPosition(document, position);
-                if (!fqcn) {
-                    return;
-                }
-                
-                const uri = index.resolve(fqcn);
-                if (!uri) {
-                    vscode.window.showWarningMessage(`Not found: ${fqcn}`);
-                    return;
-                }
+    // 🔥 3. Completion provider (autocomplete)
+    const completion = vscode.languages.registerCompletionItemProvider(
+        { scheme: "file", language: "xml" },
+        new XmlCompletionProvider(index),
+        "\\"
+    );
 
-                return new vscode.Location(uri, new vscode.Position(0, 0));
-            }
+    // 🔥 4. команда для перебудови індексу
+    const refresh = vscode.commands.registerCommand(
+        "magento.refreshIndex",
+        async () => {
+            index = new ClassIndex();
+            await index.build();
+            vscode.window.showInformationMessage("Magento index rebuilt");
         }
     );
 
-    context.subscriptions.push(provider);
-
-    const resolver = new XmlClassResolver();
-    context.subscriptions.push(
-        vscode.languages.registerCompletionItemProvider( 
-            { language: "xml" },
-            new MagentoCompletionProvider(composerIndex, resolver),
-            "\\"
-        )
-    );
+    context.subscriptions.push(definition, completion, refresh);
 }
 
 export function deactivate() {}
