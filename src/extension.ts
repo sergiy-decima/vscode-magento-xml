@@ -81,7 +81,7 @@ export async function activate(
         )
     );
 
-    const goToDi = new GoToDiCommand(index);
+    const goToDi = new GoToDiCommand(index, diIndex);
     context.subscriptions.push(
         vscode.commands.registerCommand(
             "magento.goToDi",

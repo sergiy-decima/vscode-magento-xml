@@ -36,10 +36,22 @@ export class DiIndex
         }
 
         console.log(`DI entries: ${this.map.size}`);
+        // console.log("SAMPLE KEYS:", Array.from(this.map.keys()).slice(0, 20));
     }
 
     public find(className: string): DiReference[] {
         return this.map.get(className) ?? [];
+    }
+
+    public findByShortName(short: string): DiReference[] {
+        const result: DiReference[] = [];
+        for (const [key, values] of this.map) {
+            if (key.endsWith("\\" + short)) {
+                result.push(...values);
+            }
+        }
+
+        return result;
     }
 
     private consume(node: XmlNode) {
@@ -71,7 +83,7 @@ export class DiIndex
         }
 
         const list = this.map.get(className) ?? [];
-
+// console.log("NODE:", node.name, className);
         list.push({
             className,
             kind,
