@@ -1,9 +1,12 @@
 import * as vscode from "vscode";
 import { ClassIndex } from "../index/ClassIndex";
 import { DiIndex } from "../index/DiIndex";
+import { ClassNameResolver } from "../resolver/ClassNameResolver";
 
 export class GoToDiCommand 
 {
+    private readonly resolver = new ClassNameResolver();
+
     constructor(
         private readonly classIndex: ClassIndex,
         private readonly diIndex: DiIndex
@@ -15,8 +18,8 @@ export class GoToDiCommand
             return;
         }
 
-        const className = this.normalize(this.getClassName(editor) || "");
-        // console.log("CLASS UNDER CURSOR:", className);
+        const className = this.normalize(this.resolver.resolve(editor) || "");
+        console.log("CLASS UNDER CURSOR:", className);
         if (!className) {
             vscode.window.showInformationMessage("No valid Magento class under cursor");
             return;
@@ -24,11 +27,8 @@ export class GoToDiCommand
 
         let results = this.diIndex.find(className);
         if (results.length === 0) {
-            results = this.diIndex.findByShortName(className);
-            if (results.length === 0) {
-                vscode.window.showInformationMessage("No DI references found");
-                return;
-            }
+            vscode.window.showInformationMessage("No DI references found");
+            return;
         }
         if (results.length === 1) {
             return this.open(results[0]);
