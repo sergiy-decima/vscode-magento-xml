@@ -2,9 +2,12 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
 export async function* walk(dir: string): AsyncGenerator<string> {
-    const entries = await fs.readdir(dir, {
-        withFileTypes: true
-    });
+    let entries: any[];
+    try {
+        entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+        return;
+    }
 
     for (const entry of entries) {
         const full = path.join(dir, entry.name);
@@ -12,7 +15,6 @@ export async function* walk(dir: string): AsyncGenerator<string> {
             yield* walk(full);
             continue;
         }
-
         yield full;
     }
 }

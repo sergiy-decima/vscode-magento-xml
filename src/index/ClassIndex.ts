@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { ClassIndexer } from "./ClassIndexer";
+import { ComposerDiscovery } from "./ComposerDiscovery";
 
 export interface PhpClass {
     fqcn: string;
@@ -10,39 +12,53 @@ export interface PhpClass {
 export class ClassIndex 
 {
     private readonly map = new Map<string, PhpClass>();
+    private readonly discovery = new ComposerDiscovery();
+    private readonly indexer = new ClassIndexer();
 
+    /**
+     * ComposerDiscovery → PSR-4 → ClassIndexer → ClassIndex
+     */
     public async build(): Promise<void> {
-        this.map.clear();
-        const files = await vscode.workspace.findFiles("**/*.php");
-        for (const file of files) {
-            const doc = await vscode.workspace.openTextDocument(file);
-            const text = doc.getText();
-            const namespaceMatch = text.match(/namespace\s+([^;]+);/);
-            const namespace = namespaceMatch ? namespaceMatch[1].trim() : "";
-            const regex = /(class|interface|trait|enum)\s+([A-Za-z_][A-Za-z0-9_]*)/g;
-
-            let match: RegExpExecArray | null;
-            while ((match = regex.exec(text)) !== null) {
-                const name = match[2];
-                const fqcn = namespace ? `${namespace}\\${name}` : name;
-                this.map.set(fqcn, {
-                    fqcn,
-                    uri: file,
-                    offset: match.index,
-                    length: match[0].length
-                });
-                break;
-            }
-        }
-
+        this.clear();
+        const roots = await this.discovery.discover();
+        await this.indexer.build(roots, this);
         console.log(`Indexed classes: ${this.map.size}`);
+    }
+
+    public clear(): void {
+        this.map.clear();
+    }
+
+    public add(phpClass: PhpClass): void {
+        this.map.set(phpClass.fqcn, phpClass);
+    }
+
+    public has(fqcn: string): boolean {
+        return this.map.has(fqcn);
     }
 
     public find(fqcn: string): PhpClass | undefined {
         return this.map.get(fqcn);
     }
 
-    public all(): PhpClass[] {
+    public all(): readonly PhpClass[] {
         return [...this.map.values()];
+    }
+
+    public entries(): IterableIterator<[string, PhpClass]> {
+        return this.map.entries();
+    }
+
+    public values(): IterableIterator<PhpClass> {
+        return this.map.values();
+    }
+
+    /**
+     * Total number of indexed classes
+     *
+     * @returns {number}
+     */
+    public size(): number {
+        return this.map.size;
     }
 }

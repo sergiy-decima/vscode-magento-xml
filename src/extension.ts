@@ -61,6 +61,14 @@ export async function activate(
     await index.build();
     console.log("Class index ready");
 
+
+    // console.log("Total classes:", index.size());
+    // console.log(index.find("AESKW\\A256KW"));
+    // console.log(index.find("phpseclib3\\File\\ANSI"));
+    // console.log(index.find("tubalmartin\\CssMin\\Utils"));
+    // console.log(index.find("Magento\\Framework\\App\\State"));
+
+
     await diIndex.build();
     console.log("DI index ready");
 
@@ -81,14 +89,6 @@ export async function activate(
         )
     );
 
-    const goToDi = new GoToDiCommand(index, diIndex);
-    context.subscriptions.push(
-        vscode.commands.registerCommand(
-            "magento.goToDi",
-            () => goToDi.execute()
-        )
-    );
-
     // 🔥 4. команда для перебудови індексу
     context.subscriptions.push(
         vscode.commands.registerCommand(
@@ -98,6 +98,15 @@ export async function activate(
                 await index.build();
                 vscode.window.showInformationMessage("Magento index rebuilt");
             }
+        )
+    );
+
+    // 🔥 5. cmd + shift + P on class name and Go To DI.xml
+    const goToDi = new GoToDiCommand(index, diIndex);
+    context.subscriptions.push(
+        vscode.commands.registerCommand(
+            "magento.goToDi",
+            () => goToDi.execute()
         )
     );
 }
@@ -122,18 +131,49 @@ export function deactivate() {}
 //         lexer.tokenText()
 //     );
 // }
+/////////////////
+// import { PhpClassScanner } from "./php/parser/PhpClassScanner";
 
-import { PhpClassScanner } from "./php/parser/PhpClassScanner";
+// const scanner = new PhpClassScanner();
+// const symbols = scanner.scan(`
+// <?php
 
-const scanner = new PhpClassScanner();
-const symbols = scanner.scan(`
-<?php
+// namespace Magento\\Framework\\App;
 
-namespace Magento\\Framework\\App;
+// final readonly class State 
+// {
+// }
+// `);
 
-final readonly class State 
-{
-}
-`);
+// console.log("Symbols: ", symbols);
 
-console.log("Symbols: ", symbols);
+
+// const index = new ClassIndex();
+    // index.add({
+    //     fqcn: "Magento\\Framework\\App\\State",
+    //     uri: vscode.Uri.file("/tmp/State.php"),
+    //     offset: 123,
+    //     length: 10
+    // });
+
+    // console.log(index.size()); // 1
+    // console.log(index.has("Magento\\Framework\\App\\State")); // true
+    // console.log(index.find("Magento\\Framework\\App\\State"));
+    // console.log(index.all().length); // 1
+    
+
+    // console.log("Start ComposerDiscovery test");
+    // const discovery = new ComposerDiscovery();
+    // const roots = await discovery.discover();
+    // console.log("ComposerDiscovery is loading...");
+    // console.log(roots);
+    // console.log("ComposerDiscovery is ready");
+
+    // const index = new ClassIndex();
+    // const indexer = new ClassIndexer();
+    // await indexer.build(roots, index);
+    // console.log("Index size:", index.size());
+    // console.log("Found:", index.find("Zumiez\\AurusPayPal\\Model\\Logging\\UpdateLogs"));
+    
+// import {test} from "./test";
+// test();
