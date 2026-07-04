@@ -103,3 +103,37 @@ export async function activate(
 }
 
 export function deactivate() {}
+
+
+// import { PhpLexer } from "./php/lexer/PhpLexer";
+// import { TokenType } from "./php/lexer/TokenType";
+
+// const lexer = new PhpLexer(`
+// <?php
+
+// namespace Magento\Framework\App;
+
+// final readonly class State {}
+// `);
+
+// while (lexer.scan() !== TokenType.EOF) {
+//     console.log(
+//         TokenType[lexer.tokenType()],
+//         lexer.tokenText()
+//     );
+// }
+
+import { PhpClassScanner } from "./php/parser/PhpClassScanner";
+
+const scanner = new PhpClassScanner();
+const symbols = scanner.scan(`
+<?php
+
+namespace Magento\\Framework\\App;
+
+final readonly class State 
+{
+}
+`);
+
+console.log("Symbols: ", symbols);
