@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ClassIndexer } from "./ClassIndexer";
 import { ComposerDiscovery } from "./ComposerDiscovery";
+import { IndexedClass } from "./IndexedClass";
 
 export interface PhpClass {
     fqcn: string;
@@ -29,8 +30,13 @@ export class ClassIndex
         this.map.clear();
     }
 
-    public add(phpClass: PhpClass): void {
-        this.map.set(phpClass.fqcn, phpClass);
+    public add(clazz: IndexedClass): void {
+        this.map.set(clazz.fqcn, {
+            fqcn: clazz.fqcn,
+            uri: vscode.Uri.file(clazz.file),
+            offset: clazz.offset,
+            length: clazz.length
+        });
     }
 
     public has(fqcn: string): boolean {

@@ -84,13 +84,13 @@ export class ComposerDiscovery {
 
             const dir = path.dirname(composerPath);
             const roots: Psr4Root[] = [];
-            for (const [ns, relPath] of Object.entries(psr4)) {
+            for (const [namespace, relPath] of Object.entries(psr4)) {
                 const paths = Array.isArray(relPath) ? relPath : [relPath];
-                for (const p of paths) {
-                    roots.push({
-                        namespace: ns,
-                        directory: path.resolve(dir, p)
-                    });
+                for (const relativePath of paths) {
+                    roots.push(new Psr4Root(
+                        namespace,
+                        path.resolve(dir, relativePath)
+                    ));
                 }
             }
 

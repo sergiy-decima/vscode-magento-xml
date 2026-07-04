@@ -1,58 +1,8 @@
-// import * as fs from "node:fs/promises";
-// import * as path from "node:path";
-// import { PhpClassScanner } from "../php/parser/PhpClassScanner";
-// import { Psr4Root } from "./Psr4Resolver";
-
-// export class ClassIndexer {
-//     constructor(
-//         private readonly scanner: PhpClassScanner
-//     ) {}
-
-//     public async build(
-//         roots: Psr4Root[]
-//     ): Promise<Map<string,string>> {
-//         const index = new Map<string,string>();
-//         for (const root of roots) {
-//             await this.indexDirectory(root.directory, index);
-//         }
-
-//         return index;
-//     }
-
-//     private async indexDirectory(
-//         dir: string,
-//         index: Map<string,string>
-//     ): Promise<void> {
-//         const entries = await fs.readdir(dir, {
-//             withFileTypes: true
-//         });
-
-//         for (const entry of entries) {
-//             const file = path.join(dir, entry.name);
-//             if (entry.isDirectory()) {
-//                 await this.indexDirectory(file, index);
-//                 continue;
-//             }
-
-//             if (!entry.name.endsWith(".php")) {
-//                 continue;
-//             }
-
-//             const content = await fs.readFile(file, "utf8");
-//             const symbols = this.scanner.scan(content);
-//             for (const symbol of symbols) {
-//                 index.set(symbol.fqcn, file);
-//             }
-//         }
-//     }
-// }
-
-
 import * as fs from "node:fs/promises";
 import { walk } from "./walk";
 import { Psr4Root } from "./Psr4Root";
-import { resolvePsr4 } from "./Psr4Resolver";
-import { ClassIndex, PhpClass } from "./ClassIndex";
+import { ClassIndex } from "./ClassIndex";
+import { IndexedClass } from "./IndexedClass";
 
 export class ClassIndexer {
     /**
@@ -68,15 +18,14 @@ export class ClassIndexer {
                 if (!file.endsWith(".php")) {
                     continue;
                 }
-
-                const fqcn = resolvePsr4(file, root);
-                const phpClass: PhpClass = {
-                    fqcn,
-                    uri: this.toUri(file),
+                const fqcn = root.resolve(file);
+                const clazz: IndexedClass = {
+                    fqcn: root.resolve(file),
+                    file,
                     offset: 0,
-                    length: fqcn.length
+                    length: 0
                 };
-                index.add(phpClass);
+                index.add(clazz);
             }
         }
     }
