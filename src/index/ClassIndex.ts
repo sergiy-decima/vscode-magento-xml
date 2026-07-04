@@ -22,6 +22,7 @@ export class ClassIndex
     public async build(): Promise<void> {
         this.clear();
         const roots = await this.discovery.discover();
+        console.log("PSR-4 roots:", roots.length);
         await this.indexer.build(roots, this);
         console.log(`Indexed classes: ${this.map.size}`);
     }
