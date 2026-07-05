@@ -1,10 +1,6 @@
-import { PhpSymbol } from "./parser/PhpSymbol";
+import { PhpSymbol, PhpSymbolKind } from "./parser/PhpSymbol";
 
-export interface PhpClassScanner {
-    scan(content: string): PhpSymbol[];
-}
-
-export class SimplePhpClassScanner implements PhpClassScanner {
+export class SimplePhpClassScanner {
     public scan(content: string): PhpSymbol[] {
         const symbols: PhpSymbol[] = [];
         const namespace = this.readNamespace(content);
@@ -16,7 +12,10 @@ export class SimplePhpClassScanner implements PhpClassScanner {
             symbols.push({
                 namespace,
                 shortName,
-                fqcn: namespace ? `${namespace}\\${shortName}` : shortName
+                fqcn: namespace ? `${namespace}\\${shortName}` : shortName,
+                kind: PhpSymbolKind.Class,
+                offset: 0,
+                length: 0
             });
         }
 

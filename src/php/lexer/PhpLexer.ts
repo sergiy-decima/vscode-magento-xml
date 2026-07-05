@@ -15,6 +15,8 @@ export class PhpLexer {
     private pos = 0;
     private token = TokenType.EOF;
     private text = "";
+    private offset = 0;
+    private length = 0;
 
     constructor(private readonly source: string) {}
 
@@ -23,47 +25,42 @@ export class PhpLexer {
         if (this.pos >= this.source.length) {
             this.token = TokenType.EOF;
             this.text = "";
+            this.offset = this.pos;
+            this.length = 0;
             return this.token;
         }
 
+        this.offset = this.pos;
         const ch = this.source[this.pos];
         switch (ch) {
             case "\\":
                 this.pos++;
-                this.text = "\\";
-                return this.token = TokenType.NamespaceSeparator;
+                return this.finish(TokenType.NamespaceSeparator, "\\");
 
             case "{":
                 this.pos++;
-                this.text = "{";
-                return this.token = TokenType.OpenBrace;
+                return this.finish(TokenType.OpenBrace, "{");
 
             case "}":
                 this.pos++;
-                this.text = "}";
-                return this.token = TokenType.CloseBrace;
+                return this.finish(TokenType.CloseBrace, "}");
 
             case ";":
                 this.pos++;
-                this.text = ";";
-                return this.token = TokenType.Semicolon;
+                return this.finish(TokenType.Semicolon, ";");
         }
 
         if (this.isIdentifierStart(ch)) {
-            const start = this.pos;
             this.pos++;
             while (this.pos < this.source.length && this.isIdentifierPart(this.source[this.pos])) {
                 this.pos++;
             }
-            this.text = this.source.substring(start, this.pos);
-            this.token = keywords.get(this.text) ?? TokenType.Identifier;
-
-            return this.token;
+            const text = this.source.substring(this.offset, this.pos);
+            return this.finish(keywords.get(text) ?? TokenType.Identifier, text);
         }
         this.pos++;
-        this.text = ch;
 
-        return this.token = TokenType.Unknown;
+        return this.finish(TokenType.Unknown, ch);
     }
 
     public tokenType(): TokenType {
@@ -72,6 +69,29 @@ export class PhpLexer {
 
     public tokenText(): string {
         return this.text;
+    }
+
+    public tokenOffset(): number {
+        return this.offset;
+    }
+
+    public tokenLength(): number {
+        return this.length;
+    }
+
+    public tokenEnd(): number {
+        return this.offset + this.length;
+    }
+
+    private finish(
+        type: TokenType,
+        text: string
+    ): TokenType {
+        this.token = type;
+        this.text = text;
+        this.length = this.pos - this.offset;
+
+        return type;
     }
 
     // -----------------------------
@@ -144,7 +164,7 @@ export class PhpLexer {
                 continue;
             }
 
-            break;
+            return;
         }
     }
 
