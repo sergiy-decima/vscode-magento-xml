@@ -1,12 +1,16 @@
 import * as vscode from "vscode";
 import { ClassIndex } from "./index/ClassIndex";
+import { ClassIndexer } from "./index/ClassIndexer";
+import { ComposerDiscovery } from "./index/ComposerDiscovery";
 import { DiIndex } from "./index/DiIndex";
 import { XmlDefinitionProvider } from "./providers/XmlDefinitionProvider";
 import { XmlCompletionProvider } from "./providers/XmlCompletionProvider";
 import { GoToDiCommand } from "./commands/GoToDiCommand";
 
 let index = new ClassIndex();
+let indexer = new ClassIndexer();
 let diIndex = new DiIndex();
+let discovery = new ComposerDiscovery();
 
 export async function activate(
     context: vscode.ExtensionContext
@@ -14,7 +18,9 @@ export async function activate(
     console.log("Magento VSCode Tools activated");
 
     // 🔥 1. будуємо індекс одразу при старті
-    await index.build();
+    // ComposerDiscovery → PSR-4 → ClassIndexer → ClassIndex
+    const roots = await discovery.discover();
+    await indexer.build(roots, index);
     console.log("Class index ready");
 
     await diIndex.build();
@@ -42,8 +48,7 @@ export async function activate(
         vscode.commands.registerCommand(
             "magento.refreshIndex",
             async () => {
-                index = new ClassIndex();
-                await index.build();
+                await indexer.build(roots, index);
                 vscode.window.showInformationMessage("Magento index rebuilt");
             }
         )

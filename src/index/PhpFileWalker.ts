@@ -7,13 +7,15 @@ export class PhpFileWalker {
         const entries = await fs.readdir(directory, {withFileTypes: true});
         for (const entry of entries) {
             const fullPath = path.join(directory, entry.name);
-            if (entry.isDirectory()) {
+            if (entry.isDirectory()) {               // .../_magento/vendor/magento/magento-cloud-components/tests
                 // Не індексуємо службові каталоги
-                switch (entry.name) {
+                switch (entry.name.toLowerCase()) {                // tests
+                    case "_files":
                     case ".git":
+                    case ".github":
                     case ".idea":
                     case ".vscode":
-                    case "generated":
+                //     case "generated":
                     case "node_modules":
                 //     case "pub":
                 //     case "dev":

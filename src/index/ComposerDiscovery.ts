@@ -25,6 +25,7 @@ export class ComposerDiscovery
             await this.scanVendor(path.join(base, "_magento", "vendor"), roots);
             await this.scanAppCode(path.join(base, "_magento", "app", "code"), roots);
         }
+        console.log("PSR-4 root workspaces:", roots.length);
 
         return roots;
     }

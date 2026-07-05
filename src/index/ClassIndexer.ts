@@ -1,3 +1,4 @@
+import * as vscode from "vscode";
 import * as fs from "node:fs/promises";
 import { PhpFileWalker } from "./PhpFileWalker";
 import { ClassIndex } from "./ClassIndex";
@@ -28,10 +29,11 @@ export class ClassIndexer {
                 }
                 // const fqcn = rootPsr4.resolve(file);
                 const fqcn = symbol.fqcn;
-                const clazz: IndexedClass = {fqcn, file, offset: symbol.offset, length: symbol.length};
-                index.add(clazz);
+                // const clazz: IndexedClass = {fqcn, kind: symbol.kind, uri: vscode.Uri.file(file), offset: symbol.offset, length: symbol.length};
+                index.add({fqcn, kind: symbol.kind, uri: vscode.Uri.file(file), offset: symbol.offset, length: symbol.length});
             }
         }
+        console.log(`Indexed classes: ${index.size()}`);
     }
 
     /**
@@ -42,39 +44,5 @@ export class ClassIndexer {
             fsPath: file,
             toString: () => file
         };
-    }
-
-    /**
-     * Перевіряє, що клас можна отримати лише зі шляху.
-     * Якщо файл не відповідає PSR-4 — пізніше будемо
-     * використовувати PhpSymbolScanner.
-     */
-    public async verify(
-        fqcn: string,
-        file: string,
-        scanner?: (source: string) => string[],
-    ): Promise<boolean> {
-        if (!scanner) {
-            return true;
-        }
-        const source = await fs.readFile(file, "utf8");
-        const classes = scanner(source);
-
-        return classes.includes(fqcn);
-    }
-
-    /**
-     * (fallback майбутнього рівня)
-     * Перевірка через парсинг файлу, якщо PSR-4 не спрацював
-     */
-    public async verifyClass(
-        file: string,
-        fqcn: string,
-        scanner: (source: string) => string[]
-    ): Promise<boolean> {
-        const source = await fs.readFile(file, "utf8");
-        const classes = scanner(source);
-
-        return classes.includes(fqcn);
     }
 }

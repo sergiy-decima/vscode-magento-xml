@@ -1,3 +1,6 @@
+import * as vscode from "vscode";
+import { PhpSymbolKind } from "../php/parser/PhpSymbol"
+
 export interface IndexedClass 
 {
     /**
@@ -8,21 +11,17 @@ export interface IndexedClass
      */
     fqcn: string;
 
-    /**
-     * Absolute file path
-     */
-    file: string;
+    kind: PhpSymbolKind;
+
+    uri: vscode.Uri;
 
     /**
      * Offset всередині файлу.
-     *
-     * Поки що = 0.
-     * Пізніше Scanner буде заповнювати справжнє значення.
      */
     offset: number;
 
     /**
-     * Довжина токена class/interface/trait.
+     * Довжина токена class/interface/trait => 21
      */
     length: number;
 }
