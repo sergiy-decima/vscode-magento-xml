@@ -1,8 +1,11 @@
 import { PhpTypeKind } from "./PhpTypeKind";
 
+/**
+ * Модель PHP-типу (class, interface, trait, enum)
+ */
 export interface PhpType {
     /**
-     * Class / Interface / Trait / Enum.
+     * Class / Interface / Trait / Enum
      */
     kind: PhpTypeKind;
 
@@ -17,7 +20,7 @@ export interface PhpType {
     namespace: string;
 
     /**
-     * Short class name.
+     * Short type/class name.
      */
     shortName: string;
 
@@ -35,9 +38,18 @@ export interface PhpType {
      */
     length: number;
 
+    /**
+     * Parent class.
+     */
     extends?: string;
 
+    /**
+     * Implemented interfaces.
+     */
     implements: readonly string[];
 
+    /**
+     * Used traits.
+     */
     traits: readonly string[];
 }

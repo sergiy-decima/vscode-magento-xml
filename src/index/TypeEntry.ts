@@ -1,7 +1,10 @@
 import * as vscode from "vscode";
 import { PhpTypeKind } from "../php/ast/PhpTypeKind";
 
-export interface IndexedClass 
+/**
+ * Запис "індексу". Один запис у реєстрі (FQCN → місце у файлі)
+ */
+export interface TypeEntry 
 {
     /**
      * Fully Qualified Class Name

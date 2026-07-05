@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { ClassIndex } from "../index/ClassIndex";
 import { DiIndex } from "../index/DiIndex";
 import { ClassNameResolver } from "../resolver/ClassNameResolver";
 
@@ -8,7 +7,6 @@ export class GoToDiCommand
     private readonly resolver = new ClassNameResolver();
 
     constructor(
-        private readonly classIndex: ClassIndex,
         private readonly diIndex: DiIndex
     ) {}
 
