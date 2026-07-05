@@ -18,7 +18,6 @@ export interface DiReference {
 export class DiIndex 
 {
     private readonly map = new Map<string, DiReference[]>();
-
     private readonly scanner = new XmlScanner();
 
     public async build(): Promise<void> {

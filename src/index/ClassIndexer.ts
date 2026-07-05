@@ -4,6 +4,9 @@ import { Psr4Root } from "./Psr4Root";
 import { ClassIndex } from "./ClassIndex";
 import { IndexedClass } from "./IndexedClass";
 
+/**
+ * обходить файли
+ */
 export class ClassIndexer {
     /**
      * Будує індекс класів з PSR-4 roots
@@ -19,12 +22,7 @@ export class ClassIndexer {
                     continue;
                 }
                 const fqcn = root.resolve(file);
-                const clazz: IndexedClass = {
-                    fqcn: root.resolve(file),
-                    file,
-                    offset: 0,
-                    length: 0
-                };
+                const clazz: IndexedClass = {fqcn, file, offset: 0, length: 0};
                 index.add(clazz);
             }
         }

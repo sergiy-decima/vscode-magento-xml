@@ -9,6 +9,9 @@ interface ComposerJson {
     };
 }
 
+/**
+ * пошук директорій
+ */
 export class ComposerDiscovery 
 {
     /**

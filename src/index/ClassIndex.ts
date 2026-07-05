@@ -10,6 +10,9 @@ export interface PhpClass {
     length: number;
 }
 
+/**
+ * зберігає дані
+ */
 export class ClassIndex 
 {
     private readonly map = new Map<string, PhpClass>();
