@@ -1,28 +1,34 @@
 import * as fs from "node:fs/promises";
-import { walk } from "./walk";
-import { Psr4Root } from "./Psr4Root";
+import { PhpFileWalker } from "./PhpFileWalker";
 import { ClassIndex } from "./ClassIndex";
 import { IndexedClass } from "./IndexedClass";
+import { Psr4Root } from "./Psr4Root";
+import { PhpSymbolScanner } from "../php/parser/PhpSymbolScanner";
 
 /**
  * обходить файли
  */
 export class ClassIndexer {
+    private readonly walker = new PhpFileWalker();
+    private readonly scanner = new PhpSymbolScanner();
+
     /**
      * Будує індекс класів з PSR-4 roots
      */
     public async build(
-        roots: readonly Psr4Root[],
+        rootsPsr4: readonly Psr4Root[],
         index: ClassIndex
     ): Promise<void> {
         index.clear();
-        for (const root of roots) {
-            for await (const file of walk(root.directory)) {
-                if (!file.endsWith(".php")) {
+        for (const rootPsr4 of rootsPsr4) {
+            for await (const file of this.walker.walk(rootPsr4.directory)) {
+                const symbol = await this.scanner.scanFirstFile(file);
+                if (!symbol) {
                     continue;
                 }
-                const fqcn = root.resolve(file);
-                const clazz: IndexedClass = {fqcn, file, offset: 0, length: 0};
+                // const fqcn = rootPsr4.resolve(file);
+                const fqcn = symbol.fqcn;
+                const clazz: IndexedClass = {fqcn, file, offset: symbol.offset, length: symbol.length};
                 index.add(clazz);
             }
         }
@@ -41,7 +47,7 @@ export class ClassIndexer {
     /**
      * Перевіряє, що клас можна отримати лише зі шляху.
      * Якщо файл не відповідає PSR-4 — пізніше будемо
-     * використовувати PhpClassScanner.
+     * використовувати PhpSymbolScanner.
      */
     public async verify(
         fqcn: string,
