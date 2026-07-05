@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { PhpSymbolKind } from "../php/parser/PhpSymbol"
+import { PhpTypeKind } from "../php/ast/PhpTypeKind";
 
 export interface IndexedClass 
 {
@@ -11,7 +11,7 @@ export interface IndexedClass
      */
     fqcn: string;
 
-    kind: PhpSymbolKind;
+    kind: PhpTypeKind;
 
     uri: vscode.Uri;
 

@@ -1,32 +1,33 @@
 import * as fs from "node:fs/promises";
 import { PhpLexer } from "../lexer/PhpLexer";
 import { TokenType } from "../lexer/TokenType";
-import { PhpSymbol, PhpSymbolKind } from "./PhpSymbol";
+import { PhpType } from "../ast/PhpType";
+import { PhpTypeKind } from "../ast/PhpTypeKind";
 
 export interface PhpScannerInterface {
-    scanFile(file: string): Promise<PhpSymbol[]>;
-    scanFirstFile(file: string): Promise<PhpSymbol | undefined>;
-    scan(content: string): PhpSymbol[];
-    scanFirst(content: string): PhpSymbol | undefined;
+    scanFile(file: string): Promise<PhpType[]>;
+    scanFirstFile(file: string): Promise<PhpType | undefined>;
+    scan(content: string): PhpType[];
+    scanFirst(content: string): PhpType | undefined;
 }
 
 /**
  * швидке виділення символів
  */
 export class PhpSymbolScanner implements PhpScannerInterface {
-    public async scanFile(file: string): Promise<PhpSymbol[]> {
+    public async scanFile(file: string): Promise<PhpType[]> {
         const content = await fs.readFile(file, "utf8");
         return this.scan(content);
     }
 
-    public async scanFirstFile(file: string): Promise<PhpSymbol | undefined> {
+    public async scanFirstFile(file: string): Promise<PhpType | undefined> {
         const content = await fs.readFile(file, "utf8");
         return this.scanFirst(content);
     }
 
-    public scan(content: string): PhpSymbol[] {
+    public scan(content: string): PhpType[] {
         const lexer = new PhpLexer(content);
-        const symbols: PhpSymbol[] = [];
+        const symbols: PhpType[] = [];
         let namespace = "";
         while (lexer.scan() !== TokenType.EOF) {
             switch (lexer.tokenType()) {
@@ -35,19 +36,19 @@ export class PhpSymbolScanner implements PhpScannerInterface {
                     break;
 
                 case TokenType.Class:
-                    this.readDeclaration(lexer, namespace, PhpSymbolKind.Class, symbols);
+                    this.readDeclaration(lexer, namespace, PhpTypeKind.Class, symbols);
                     break;
 
                 case TokenType.Interface:
-                    this.readDeclaration(lexer, namespace, PhpSymbolKind.Interface, symbols);
+                    this.readDeclaration(lexer, namespace, PhpTypeKind.Interface, symbols);
                     break;
 
                 case TokenType.Trait:
-                    this.readDeclaration(lexer, namespace, PhpSymbolKind.Trait, symbols);
+                    this.readDeclaration(lexer, namespace, PhpTypeKind.Trait, symbols);
                     break;
 
                 case TokenType.Enum:
-                    this.readDeclaration(lexer, namespace, PhpSymbolKind.Enum, symbols);
+                    this.readDeclaration(lexer, namespace, PhpTypeKind.Enum, symbols);
                     break;
             }
         }
@@ -55,7 +56,7 @@ export class PhpSymbolScanner implements PhpScannerInterface {
         return symbols;
     }
 
-    public scanFirst(content: string): PhpSymbol | undefined {
+    public scanFirst(content: string): PhpType | undefined {
         const lexer = new PhpLexer(content);
         let namespace = "";
         while (lexer.scan() !== TokenType.EOF) {
@@ -65,16 +66,16 @@ export class PhpSymbolScanner implements PhpScannerInterface {
                     break;
 
                 case TokenType.Class:
-                    return this.readSingleDeclaration(lexer, namespace, PhpSymbolKind.Class);
+                    return this.readSingleDeclaration(lexer, namespace, PhpTypeKind.Class);
 
                 case TokenType.Interface:
-                    return this.readSingleDeclaration(lexer, namespace, PhpSymbolKind.Interface);
+                    return this.readSingleDeclaration(lexer, namespace, PhpTypeKind.Interface);
 
                 case TokenType.Trait:
-                    return this.readSingleDeclaration(lexer, namespace, PhpSymbolKind.Trait);
+                    return this.readSingleDeclaration(lexer, namespace, PhpTypeKind.Trait);
 
                 case TokenType.Enum:
-                    return this.readSingleDeclaration(lexer, namespace, PhpSymbolKind.Enum);
+                    return this.readSingleDeclaration(lexer, namespace, PhpTypeKind.Enum);
             }
         }
 
@@ -110,8 +111,8 @@ export class PhpSymbolScanner implements PhpScannerInterface {
     private readDeclaration(
         lexer: PhpLexer,
         namespace: string,
-        kind: PhpSymbolKind,
-        result: PhpSymbol[]
+        kind: PhpTypeKind,
+        result: PhpType[]
     ): void {
         const symbol = this.readSingleDeclaration(lexer, namespace, kind);
         if (symbol) {
@@ -125,8 +126,8 @@ export class PhpSymbolScanner implements PhpScannerInterface {
     private readSingleDeclaration(
         lexer: PhpLexer,
         namespace: string,
-        kind: PhpSymbolKind,
-    ): PhpSymbol | undefined {
+        kind: PhpTypeKind,
+    ): PhpType | undefined {
         const keywordOffset = lexer.tokenOffset();
         const keywordLength = lexer.tokenLength();
         if (lexer.scan() !== TokenType.Identifier) {
@@ -140,7 +141,9 @@ export class PhpSymbolScanner implements PhpScannerInterface {
             shortName,
             kind,
             offset: keywordOffset,
-            length: keywordLength + 1 + shortName.length
+            length: keywordLength + 1 + shortName.length,
+            implements: [],
+            traits: []
         };
     }
 }

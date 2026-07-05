@@ -1,8 +1,10 @@
-export interface PhpSymbol {
+import { PhpTypeKind } from "./PhpTypeKind";
+
+export interface PhpType {
     /**
      * Class / Interface / Trait / Enum.
      */
-    kind: PhpSymbolKind;
+    kind: PhpTypeKind;
 
     /**
      * Fully Qualified Class Name.
@@ -32,11 +34,10 @@ export interface PhpSymbol {
      * Example: class Foo
      */
     length: number;
-}
 
-export const enum PhpSymbolKind {
-    Class,
-    Interface,
-    Trait,
-    Enum
+    extends?: string;
+
+    implements: readonly string[];
+
+    traits: readonly string[];
 }

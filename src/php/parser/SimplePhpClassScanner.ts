@@ -1,8 +1,9 @@
-import { PhpSymbol, PhpSymbolKind } from "./parser/PhpSymbol";
+import { PhpType } from "../ast/PhpType";
+import { PhpTypeKind } from "../ast/PhpTypeKind";
 
 export class SimplePhpClassScanner {
-    public scan(content: string): PhpSymbol[] {
-        const symbols: PhpSymbol[] = [];
+    public scan(content: string): PhpType[] {
+        const symbols: PhpType[] = [];
         const namespace = this.readNamespace(content);
         const classRegex = /\b(?:final\s+|abstract\s+|readonly\s+)*\b(class|interface|trait|enum)\s+([A-Za-z_][A-Za-z0-9_]*)/g;
 
@@ -13,9 +14,11 @@ export class SimplePhpClassScanner {
                 namespace,
                 shortName,
                 fqcn: namespace ? `${namespace}\\${shortName}` : shortName,
-                kind: PhpSymbolKind.Class,
+                kind: PhpTypeKind.Class,
                 offset: 0,
-                length: 0
+                length: 0,
+                implements: [],
+                traits: []
             });
         }
 
