@@ -9,6 +9,9 @@ const keywords = new Map<string, TokenType>([
     ["abstract", TokenType.Abstract],
     ["final", TokenType.Final],
     ["readonly", TokenType.Readonly],
+    ["extends", TokenType.Extends],
+    ["implements", TokenType.Implements],
+    ["use", TokenType.Use],
 ]);
 
 export class PhpLexer {
@@ -48,6 +51,11 @@ export class PhpLexer {
             case ";":
                 this.pos++;
                 return this.finish(TokenType.Semicolon, ";");
+
+            case ",":
+                this.pos++;
+                this.text = ",";
+                return this.token = TokenType.Comma;
         }
 
         if (this.isIdentifierStart(ch)) {
@@ -84,14 +92,14 @@ export class PhpLexer {
     }
 
     private finish(
-        type: TokenType,
+        token: TokenType,
         text: string
     ): TokenType {
-        this.token = type;
+        this.token = token;
         this.text = text;
         this.length = this.pos - this.offset;
 
-        return type;
+        return token;
     }
 
     // -----------------------------

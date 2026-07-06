@@ -1,10 +1,13 @@
 export enum TokenType {
-    Identifier,
     Namespace,
     Class,
     Interface,
     Trait,
     Enum,
+    Extends,
+    Implements,
+    Use,
+    Identifier,
     Abstract,
     Final,
     Readonly,
@@ -12,6 +15,7 @@ export enum TokenType {
     OpenBrace,
     CloseBrace,
     Semicolon,
+    Comma,
     Attribute,
     Unknown,
     EOF
