@@ -1,8 +1,8 @@
 import * as fs from "node:fs/promises";
-import { PhpLexer } from "../lexer/PhpLexer";
 import { TokenType } from "../lexer/TokenType";
 import { PhpType } from "../ast/PhpType";
 import { PhpTypeKind } from "../ast/PhpTypeKind";
+import { PhpParserBase } from "./PhpParserBase";
 
 export interface PhpScannerInterface {
     scanFile(file: string): Promise<PhpType[]>;
@@ -12,9 +12,27 @@ export interface PhpScannerInterface {
 }
 
 /**
- * швидке виділення символів
+ * PHP type scanner.
+ *
+ * Знаходить:
+ *
+ * - namespace
+ * - class
+ * - interface
+ * - trait
+ * - enum
+ * - extends
+ * - implements
+ * - trait usage
  */
-export class PhpSymbolScanner implements PhpScannerInterface {
+export class PhpSymbolScanner
+    extends PhpParserBase
+    implements PhpScannerInterface {
+
+    constructor(content?: string) {
+        super(content ?? "");
+    }
+
     public async scanFile(file: string): Promise<PhpType[]> {
         const content = await fs.readFile(file, "utf8");
         return this.scan(content);
@@ -26,302 +44,153 @@ export class PhpSymbolScanner implements PhpScannerInterface {
     }
 
     public scan(content: string): PhpType[] {
-        const lexer = new PhpLexer(content);
-        const typeList: PhpType[] = [];
+        const scanner = new PhpSymbolScanner(content);
+        const result: PhpType[] = [];
         let namespace = "";
-        while (lexer.scan() !== TokenType.EOF) {
-            const token = lexer.tokenType();
-            switch (token) {
-                case TokenType.Namespace:
-                    namespace = this.readNamespace(lexer);
-                    break;
-
-                case TokenType.Class:
-                case TokenType.Interface:
-                case TokenType.Trait:
-                case TokenType.Enum:
-                    this.collectType(lexer, namespace, token, typeList);
-                    break;
-            }
-        }
-
-        return typeList;
-    }
-
-    public scanFirst(content: string): PhpType | undefined {
-        const lexer = new PhpLexer(content);
-        let namespace = "";
-        let phpType: Partial<PhpType> | null = null;
-        while (lexer.scan() !== TokenType.EOF) {
-            const token = lexer.tokenType();
-            switch (token) {
-                case TokenType.Namespace:
-                    namespace = this.readNamespace(lexer);
-                    break;
-
-                case TokenType.Class:
-                case TokenType.Interface:
-                case TokenType.Trait:
-                case TokenType.Enum:
-                    phpType = this.readPhpType(lexer, namespace, token);
-                    break;
+        while (!scanner.eof()) {
+            if (scanner.match(TokenType.Namespace)) {
+                namespace = scanner.readNamespace();
+                continue;
             }
 
-            if (phpType?.fqcn) {
-                return phpType as PhpType;
+            if (scanner.isTypeKeyword()) {
+                const type = scanner.readPhpType(namespace, scanner.tokenType());
+                if (type) {
+                    result.push(type);
+                }
+                continue;
             }
-        }
-
-        return undefined;
-    }
-
-    private readNamespace(lexer: PhpLexer): string {
-        const parts: string[] = [];
-        while (lexer.scan() !== TokenType.EOF) {
-            switch (lexer.tokenType()) {
-                case TokenType.Identifier:
-                    parts.push(lexer.tokenText());
-                    break;
-
-                case TokenType.NamespaceSeparator:
-                    break;
-
-                case TokenType.Semicolon:
-                case TokenType.OpenBrace:
-                    return parts.join("\\");
-
-                default:
-                    return "";
-            }
-        }
-
-        return "";
-    }
-
-    /**
-     * Assamble php type and add one to type list
-     * 
-     * @param lexer 
-     * @param namespace 
-     * @param token 
-     * @param typeList 
-     */
-    private collectType(
-        lexer: PhpLexer,
-        namespace: string,
-        token: TokenType,
-        typeList: PhpType[]
-    ): void {
-        const type = this.readPhpType(lexer, namespace, token);
-        if (type) {
-            typeList.push(type);
-        }
-    }
-
-    /**
-     * Assamble php type
-     * 
-     * @param lexer 
-     * @param namespace 
-     * @param token 
-     * @returns 
-     */
-    private readPhpType(
-        lexer: PhpLexer,
-        namespace: string,
-        token: TokenType
-    ): PhpType | null {
-        if (lexer.scan() !== TokenType.Identifier) {
-            return null;
-        }
-        const keywordOffset = lexer.tokenOffset();
-        const keywordLength = lexer.tokenLength();
-        const shortName = lexer.tokenText();
-        const fqcn = namespace ? `${namespace}\\${shortName}` : shortName;
-        const kind = this.mapKind(token);
-
-        const result: PhpType = {
-            fqcn,
-            namespace,
-            shortName,
-            kind,
-            offset: keywordOffset,
-            length: keywordLength + 1 + shortName.length,
-            extends: undefined,
-            implements: [],
-            traits: []
-        };
-
-         // 🔥 PARSE inheritance chain
-        let t = lexer.scan();
-        while (t !== TokenType.EOF) {
-            switch (t) {
-                case TokenType.Extends:
-                    result.extends = this.parseExtends(lexer);
-                    break;
-
-                case TokenType.Implements:
-                    result.implements = this.parseImplements(lexer);
-                    break;
-
-                case TokenType.Use:
-                    result.traits = this.parseTraits(lexer);
-                    break;
-
-                case TokenType.OpenBrace:
-                    return result;
-            }
-            t = lexer.scan();
+            scanner.next();
         }
 
         return result;
     }
 
-    private mapKind(token: TokenType): PhpTypeKind {
-        switch (token) {
-            case TokenType.Class:
-                return PhpTypeKind.Class;
-            case TokenType.Interface:
-                return PhpTypeKind.Interface;
-            case TokenType.Trait:
-                return PhpTypeKind.Trait;
-            case TokenType.Enum:
-                return PhpTypeKind.Enum;
-            default:
-                return PhpTypeKind.Class;
-        }
+    public scanFirst(content: string): PhpType | undefined {
+        const list = this.scan(content);
+        return list[0];
     }
 
-    /**
-     * helper
-     *
-     * @param lexer 
-     * @returns 
-     */
-    private readTypeName(lexer: PhpLexer): string | undefined {
+    private readNamespace(): string {
         const parts: string[] = [];
-        while (lexer.scan() !== TokenType.EOF) {
-            const token = lexer.tokenType();
-            if (token === TokenType.Identifier) {
-                parts.push(lexer.tokenText());
+        while (!this.eof()) {
+            if (this.tokenType() === TokenType.Identifier) {
+                parts.push(this.tokenText());
+                this.next();
                 continue;
             }
 
-            if (token === TokenType.NamespaceSeparator) {
-                parts.push("\\");
+            if (this.match(TokenType.NamespaceSeparator)) {
                 continue;
             }
 
-            // stop on structure boundary
             if (
-                token === TokenType.Extends ||
-                token === TokenType.Implements ||
-                token === TokenType.Use ||
-                token === TokenType.OpenBrace ||
-                token === TokenType.Semicolon
+                this.match(TokenType.Semicolon) ||
+                this.match(TokenType.OpenBrace)
             ) {
                 break;
             }
             break;
         }
 
-        return parts.length ? parts.join("") : undefined;
+        return parts.join("\\");
     }
 
-    private readQualifiedName(lexer: PhpLexer): string | undefined {
-        if (lexer.tokenType() !== TokenType.Identifier) {
+    private readPhpType(
+        namespace: string,
+        keyword: TokenType
+    ): PhpType | undefined {
+        this.next();
+        if (this.tokenType() !== TokenType.Identifier) {
             return;
         }
 
-        let name = lexer.tokenText();
-        while (lexer.scan() === TokenType.NamespaceSeparator) {
-            if (lexer.scan() !== TokenType.Identifier) {
-                break;
-            }
-            name += "\\" + lexer.tokenText();
-        }
+        const nameToken = this.token();
+        const shortName = nameToken.text;
+        const fqcn = namespace ? `${namespace}\\${shortName}` : shortName;
+        const type: PhpType = {
+            fqcn,
+            namespace,
+            shortName,
+            kind: this.mapKind(keyword),
+            offset: nameToken.offset,
+            length: nameToken.length,
+            extends: undefined,
+            implements: [],
+            traits: []
+        };
+        this.next();
+        this.readTypeHeader(type);
+        this.readTypeBody(type);
 
-        return name;
+        return type;
     }
 
-    /**
-     * Парсинг extends
-     *
-     * @param lexer 
-     * @returns 
-     */
-    private parseExtends(lexer: PhpLexer): string | undefined {
-        const name = this.readQualifiedName(lexer);
-        return name;
-    }
-
-    /**
-     * Парсинг implements
-     *
-     * @param lexer 
-     * @returns 
-     */
-    private parseImplements(lexer: PhpLexer): string[] {
-        const result: string[] = [];
-
-        // перший токен після implements
-        if (lexer.scan() !== TokenType.Identifier) {
-            return result;
-        }
-
-        while (true) {
-            const name = this.readQualifiedName(lexer);
-            if (name) {
-                result.push(name);
+    private readTypeHeader(type: PhpType): void {
+        while (!this.eof()) {
+            if (this.match(TokenType.Extends)) {
+                type.extends = this.readQualifiedName();
+                continue;
             }
 
-            switch (lexer.tokenType()) {
-                case TokenType.Comma:
-                    if (lexer.scan() !== TokenType.Identifier) {
-                        return result;
-                    }
-                    continue;
-
-                case TokenType.OpenBrace:
-                    return result;
-
-                default:
-                    return result;
+            if (this.match(TokenType.Implements)) {
+                type.implements = this.readNameList();
+                continue;
             }
+
+            if (this.match(TokenType.OpenBrace)) {
+                return;
+            }
+            this.next();
         }
     }
 
-    /**
-     * Парсинг use (traits)
-     *
-     * @param lexer 
-     * @returns 
-     */
-    private parseTraits(lexer: PhpLexer): string[] {
-        const result: string[] = [];
-        if (lexer.scan() !== TokenType.Identifier) {
-            return result;
+    private readTypeBody(type: PhpType): void {
+        const traits: string[] = [];
+        let level = 1;
+        while (!this.eof() && level > 0) {
+            if (this.match(TokenType.OpenBrace)) {
+                level++;
+                continue;
+            }
+
+            if (this.match(TokenType.CloseBrace)) {
+                level--;
+                continue;
+            }
+
+            if (level === 1 && this.match(TokenType.Use)) {
+                traits.push(...this.readNameList());
+                this.match(TokenType.Semicolon);
+                continue;
+            }
+            this.next();
         }
+        type.traits = traits;
+    }
 
-        while (true) {
-            const name = this.readQualifiedName(lexer);
-            if (name) {
-                result.push(name);
-            }
+    private isTypeKeyword(): boolean {
+        return (
+            this.tokenType() === TokenType.Class ||
+            this.tokenType() === TokenType.Interface ||
+            this.tokenType() === TokenType.Trait ||
+            this.tokenType() === TokenType.Enum
+        );
+    }
 
-            switch (lexer.tokenType()) {
-                case TokenType.Comma:
-                    if (lexer.scan() !== TokenType.Identifier) {
-                        return result;
-                    }
-                    continue;
+    private mapKind(token: TokenType): PhpTypeKind {
+        switch (token) {
+            case TokenType.Interface:
+                return PhpTypeKind.Interface;
 
-                case TokenType.Semicolon:
-                    return result;
+            case TokenType.Trait:
+                return PhpTypeKind.Trait;
 
-                default:
-                    return result;
-            }
+            case TokenType.Enum:
+                return PhpTypeKind.Enum;
+
+            default:
+                return PhpTypeKind.Class;
         }
     }
 }

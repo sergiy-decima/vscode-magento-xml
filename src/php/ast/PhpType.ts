@@ -46,10 +46,10 @@ export interface PhpType {
     /**
      * Implemented interfaces.
      */
-    implements: readonly string[];
+    implements: string[];
 
     /**
      * Used traits.
      */
-    traits: readonly string[];
+    traits: string[];
 }

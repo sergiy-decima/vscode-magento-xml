@@ -1,3 +1,4 @@
+import { PhpToken } from "./PhpToken";
 import { TokenType } from "./TokenType";
 
 const keywords = new Map<string, TokenType>([
@@ -15,47 +16,81 @@ const keywords = new Map<string, TokenType>([
 ]);
 
 export class PhpLexer {
+    private current: PhpToken = {
+        type: TokenType.EOF,
+        text: "",
+        offset: 0,
+        length: 0
+    };
     private pos = 0;
-    private token = TokenType.EOF;
-    private text = "";
-    private offset = 0;
-    private length = 0;
 
     constructor(private readonly source: string) {}
 
     public scan(): TokenType {
         this.skipTrivia();
         if (this.pos >= this.source.length) {
-            this.token = TokenType.EOF;
-            this.text = "";
-            this.offset = this.pos;
-            this.length = 0;
-            return this.token;
+            this.current = {
+                type: TokenType.EOF,
+                text: "",
+                offset: this.pos,
+                length: 0
+            };
+
+            return this.current.type;
         }
 
-        this.offset = this.pos;
+        const start = this.pos;
         const ch = this.source[this.pos];
         switch (ch) {
             case "\\":
                 this.pos++;
-                return this.finish(TokenType.NamespaceSeparator, "\\");
+                this.current = {
+                    type: TokenType.NamespaceSeparator,
+                    text: "\\",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
 
             case "{":
                 this.pos++;
-                return this.finish(TokenType.OpenBrace, "{");
+                this.current = {
+                    type: TokenType.OpenBrace,
+                    text: "{",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
 
             case "}":
                 this.pos++;
-                return this.finish(TokenType.CloseBrace, "}");
+                this.current = {
+                    type: TokenType.CloseBrace,
+                    text: "}",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
 
             case ";":
                 this.pos++;
-                return this.finish(TokenType.Semicolon, ";");
+                this.current = {
+                    type: TokenType.Semicolon,
+                    text: ";",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
 
             case ",":
                 this.pos++;
-                this.text = ",";
-                return this.token = TokenType.Comma;
+                this.current = {
+                    type: TokenType.Comma,
+                    text: ",",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
         }
 
         if (this.isIdentifierStart(ch)) {
@@ -63,44 +98,67 @@ export class PhpLexer {
             while (this.pos < this.source.length && this.isIdentifierPart(this.source[this.pos])) {
                 this.pos++;
             }
-            const text = this.source.substring(this.offset, this.pos);
-            return this.finish(keywords.get(text) ?? TokenType.Identifier, text);
-        }
-        this.pos++;
 
-        return this.finish(TokenType.Unknown, ch);
+            const text = this.source.substring(start, this.pos);
+            this.current = {
+                type: keywords.get(text) ?? TokenType.Identifier,
+                text,
+                offset: start,
+                length: this.pos - start
+            };
+
+            return this.current.type;
+        }
+
+        this.pos++;
+        this.current = {
+            type: TokenType.Unknown,
+            text: ch,
+            offset: start,
+            length: 1
+        };
+
+        return this.current.type;
+    }
+
+    public token(): Readonly<PhpToken> {
+        return this.current;
     }
 
     public tokenType(): TokenType {
-        return this.token;
+        return this.current.type;
     }
 
     public tokenText(): string {
-        return this.text;
+        return this.current.text;
     }
 
     public tokenOffset(): number {
-        return this.offset;
+        return this.current.offset;
     }
 
     public tokenLength(): number {
-        return this.length;
+        return this.current.length;
     }
 
     public tokenEnd(): number {
-        return this.offset + this.length;
+        return this.current.offset + this.current.length;
     }
 
-    private finish(
-        token: TokenType,
-        text: string
-    ): TokenType {
-        this.token = token;
-        this.text = text;
-        this.length = this.pos - this.offset;
 
-        return token;
-    }
+
+
+
+    // private finish(
+    //     token: TokenType,
+    //     text: string
+    // ): TokenType {
+    //     this.token = token;
+    //     this.text = text;
+    //     this.length = this.pos - this.offset;
+
+    //     return token;
+    // }
 
     // -----------------------------
     private skipTrivia(): void {
