@@ -1,10 +1,8 @@
-import * as vscode from "vscode";
 import { PhpFileWalker } from "./PhpFileWalker";
 import { TypeRegistry } from "./TypeRegistry";
 import { Psr4Root } from "./Psr4Root";
 import { PhpSymbolScanner } from "../php/parser/PhpSymbolScanner";
-import { PhpType } from "../php/ast/PhpType";
-import { TypeEntry } from "./TypeEntry";
+import { TypeEntryFactory } from "./TypeEntryFactory";
 
 /**
  * Будує реєстр типів.
@@ -16,6 +14,7 @@ import { TypeEntry } from "./TypeEntry";
 export class TypeBuilder {
     private readonly walker = new PhpFileWalker();
     private readonly scanner = new PhpSymbolScanner();
+    private readonly factory = new TypeEntryFactory();
 
     /**
      * Будує індекс класів з PSR-4 roots
@@ -27,25 +26,12 @@ export class TypeBuilder {
             for await ( const file of this.walker.walk(root.directory) ) {
                 const types = await this.scanner.scanFile(file);
                 for (const phpType of types) {
-                    const entry = this.createEntry(file, phpType);
+                    const entry = this.factory.create(file, phpType);
                     registry.add(entry);
                 }
             }
         }
         console.log(`Indexed PHP types: ${registry.size()}`);
-    }
-
-    private createEntry(file: string, type: PhpType): TypeEntry {
-        return {
-            fqcn: type.fqcn,
-            uri: vscode.Uri.file(file),
-            offset: type.offset,
-            length: type.length,
-            kind: type.kind,
-            extends: type.extends,
-            implements: type.implements,
-            traits: type.traits
-        };
     }
 
     /**
