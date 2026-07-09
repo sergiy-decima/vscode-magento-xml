@@ -1,6 +1,6 @@
-import { PhpLexer } from "../lexer/PhpLexer";
 import { PhpToken } from "../lexer/PhpToken";
 import { TokenType } from "../lexer/TokenType";
+import { PhpTokenStream } from "./PhpTokenStream";
 
 /**
  * Base helper for PHP parsers.
@@ -9,74 +9,59 @@ import { TokenType } from "../lexer/TokenType";
  * Дає базові операції для scanner/parser класів.
  */
 export abstract class PhpParserBase {
-    protected readonly lexer: PhpLexer;
-    private current: PhpToken;
+    protected readonly stream: PhpTokenStream;
 
-    constructor(context: string) {
-        this.lexer = new PhpLexer(context);
-        this.current = this.readNext();
+    constructor(stream: PhpTokenStream) {
+        this.stream = stream;
     }
 
     /**
      * Поточний токен
      */
     protected token(): Readonly<PhpToken> {
-        return this.current;
+        return this.stream.token();
     }
 
     /**
      * Тип поточного токена
      */
     protected tokenType(): TokenType {
-        return this.current.type;
+        return this.stream.tokenType();
     }
 
     /**
      * Текст поточного токена
      */
     protected tokenText(): string {
-        return this.current.text;
+        return this.stream.token().text;
     }
 
     /**
      * Перехід на наступний токен
      */
     protected next(): void {
-        this.current = this.readNext();
+        this.stream.next();
     }
 
     /**
      * Перевірити і перейти далі
      */
     protected match(type: TokenType): boolean {
-        if (this.current.type !== type) {
-            return false;
-        }
-        this.next();
-
-        return true;
+        return this.stream.match(type);
     }
 
     /**
      * Очікуємо конкретний токен.
      */
     protected expect(type: TokenType): PhpToken {
-        if (this.current.type !== type) {
-            throw new Error(
-                `Expected ${TokenType[type]}, got ${TokenType[this.current.type]}`
-            );
-        }
-        const token = this.current;
-        this.next();
-
-        return token;
+        return this.stream.expect(type);
     }
 
     /**
      * Кінець файлу?
      */
     protected eof(): boolean {
-        return this.current.type === TokenType.EOF;
+        return this.stream.eof();
     }
 
     /**
@@ -153,13 +138,5 @@ export abstract class PhpParserBase {
             }
             this.next();
         }
-    }
-
-    /**
-     * Lexer wrapper.
-     */
-    private readNext(): PhpToken {
-        this.lexer.scan();
-        return this.lexer.token();
     }
 }

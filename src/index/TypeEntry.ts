@@ -14,6 +14,12 @@ export interface TypeEntry
      */
     fqcn: string;
 
+    file: string;
+    
+    className: string;
+
+    namespace?: string;
+
     /**
      * PHP type kind
      */

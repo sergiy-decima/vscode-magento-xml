@@ -1,21 +1,18 @@
-import * as fs from "node:fs/promises";
 import { TokenType } from "../lexer/TokenType";
 import { PhpType } from "../ast/PhpType";
 import { PhpTypeKind } from "../ast/PhpTypeKind";
 import { PhpParserBase } from "./PhpParserBase";
+import { PhpTokenStream } from "./PhpTokenStream";
 
-export interface PhpScannerInterface {
-    scanFile(file: string): Promise<PhpType[]>;
-    scanFirstFile(file: string): Promise<PhpType | undefined>;
-    scan(content: string): PhpType[];
-    scanFirst(content: string): PhpType | undefined;
+export interface PhpParserInterface {
+    parse(): PhpType[];
+    parseFirst(): PhpType | undefined;
 }
 
 /**
  * PHP type scanner.
  *
- * Знаходить:
- *
+ * Знаходить PHP-типи:
  * - namespace
  * - class
  * - interface
@@ -25,49 +22,36 @@ export interface PhpScannerInterface {
  * - implements
  * - trait usage
  */
-export class PhpSymbolScanner
-    extends PhpParserBase
-    implements PhpScannerInterface {
-
-    constructor(content?: string) {
-        super(content ?? "");
+export class PhpTypeParser extends PhpParserBase implements PhpParserInterface {
+    constructor(stream: PhpTokenStream) {
+        super(stream);
     }
 
-    public async scanFile(file: string): Promise<PhpType[]> {
-        const content = await fs.readFile(file, "utf8");
-        return this.scan(content);
-    }
-
-    public async scanFirstFile(file: string): Promise<PhpType | undefined> {
-        const content = await fs.readFile(file, "utf8");
-        return this.scanFirst(content);
-    }
-
-    public scan(content: string): PhpType[] {
-        const scanner = new PhpSymbolScanner(content);
+    public parse(): PhpType[] {
+        // const scanner = new PhpTypeParser(document.content);
         const result: PhpType[] = [];
         let namespace = "";
-        while (!scanner.eof()) {
-            if (scanner.match(TokenType.Namespace)) {
-                namespace = scanner.readNamespace();
+        while (!this.eof()) {
+            if (this.match(TokenType.Namespace)) {
+                namespace = this.readNamespace();
                 continue;
             }
 
-            if (scanner.isTypeKeyword()) {
-                const type = scanner.readPhpType(namespace, scanner.tokenType());
+            if (this.isTypeKeyword()) {
+                const type = this.readPhpType(namespace, this.tokenType());
                 if (type) {
                     result.push(type);
                 }
                 continue;
             }
-            scanner.next();
+            this.next();
         }
 
         return result;
     }
 
-    public scanFirst(content: string): PhpType | undefined {
-        const list = this.scan(content);
+    public parseFirst(): PhpType | undefined {
+        const list = this.parse();
         return list[0];
     }
 

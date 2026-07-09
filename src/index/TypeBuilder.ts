@@ -1,10 +1,14 @@
-import { PhpFileWalker } from "./PhpFileWalker";
 import { TypeRegistry } from "./TypeRegistry";
-import { Psr4Root } from "./Psr4Root";
-import { PhpSymbolScanner } from "../php/parser/PhpSymbolScanner";
 import { TypeEntryFactory } from "./TypeEntryFactory";
+import { TypeDocumentReader } from "./TypeDocumentReader";
+import { TypeIndexSource } from "./TypeIndexSource";
+
+import { PhpTypeParser } from "../php/parser/PhpTypeParser";
+import { PhpLexer } from "../php/lexer/PhpLexer";
+import { PhpTokenStream } from "../php/parser/PhpTokenStream";
 
 /**
+ * Координує процес побудови.
  * Будує реєстр типів.
  * Обходить файли, будує/наповнює індекс - створює записи
  * 
@@ -12,35 +16,37 @@ import { TypeEntryFactory } from "./TypeEntryFactory";
  * PSR-4 roots -> PHP files -> PhpType -> TypeEntry
  */
 export class TypeBuilder {
-    private readonly walker = new PhpFileWalker();
-    private readonly scanner = new PhpSymbolScanner();
+    private readonly reader = new TypeDocumentReader();
     private readonly factory = new TypeEntryFactory();
 
-    /**
-     * Будує індекс класів з PSR-4 roots
-     * Build type registry from PSR-4 roots
-     */
-    public async build(roots: readonly Psr4Root[], registry: TypeRegistry): Promise<void> {
-        registry.clear();
-        for (const root of roots) {
-            for await ( const file of this.walker.walk(root.directory) ) {
-                const types = await this.scanner.scanFile(file);
-                for (const phpType of types) {
-                    const entry = this.factory.create(file, phpType);
-                    registry.add(entry);
-                }
-            }
-        }
-        console.log(`Indexed PHP types: ${registry.size()}`);
+    public constructor(private readonly registry: TypeRegistry) {
     }
 
     /**
-     * Конвертація шляху у vscode.Uri без залежності від vscode тут
+     * Повне будування індексу.
+     * Будує індекс класів з PSR-4 roots
+     * Build type registry from PSR-4 roots
      */
-    private toUri(file: string): any {
-        return {
-            fsPath: file,
-            toString: () => file
-        };
+    public async build(source: TypeIndexSource): Promise<void> {
+        this.registry.clear();
+        for await (const sourceEntry of source.entries()) {
+            await this.buildFile(sourceEntry.file);
+        }
+        console.log(`Indexed PHP types: ${this.registry.size()}`);
+    }
+
+    /**
+     * Індексує один PHP-файл.
+     * Index a single PHP file.
+     */
+    public async buildFile(file: string): Promise<void> {
+        const document = await this.reader.read(file);
+        const lexer = new PhpLexer(document.content);
+        const stream =new PhpTokenStream(lexer);
+        const parser = new PhpTypeParser(stream);
+        const phpTypes = parser.parse();
+        for (const phpType of phpTypes) {
+            this.registry.add( this.factory.create(document.file, phpType) );
+        }
     }
 }

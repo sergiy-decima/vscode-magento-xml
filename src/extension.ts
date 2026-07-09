@@ -1,16 +1,17 @@
 import * as vscode from "vscode";
 import { TypeRegistry } from "./index/TypeRegistry";
 import { TypeBuilder } from "./index/TypeBuilder";
-import { ComposerDiscovery } from "./index/ComposerDiscovery";
 import { DiIndex } from "./index/DiIndex";
 import { XmlDefinitionProvider } from "./providers/XmlDefinitionProvider";
 import { XmlCompletionProvider } from "./providers/XmlCompletionProvider";
 import { GoToDiCommand } from "./commands/GoToDiCommand";
+import { CompositeTypeSource } from "./index/CompositeTypeSource";
+import { ComposerPsr4Source } from "./index/ComposerPsr4Source";
+import { WorkspaceWatcher } from "./workspace/WorkspaceWatcher";
 
 let registry = new TypeRegistry();
-let builder = new TypeBuilder();
+let builder = new TypeBuilder(registry);
 let diIndex = new DiIndex();
-let discovery = new ComposerDiscovery();
 
 export async function activate(
     context: vscode.ExtensionContext
@@ -19,9 +20,14 @@ export async function activate(
 
     // 🔥 1. будуємо індекс одразу при старті
     // ComposerDiscovery → PSR-4 → ClassIndexer → ClassIndex
-    const roots = await discovery.discover();
-    await builder.build(roots, registry);
+    const source = new CompositeTypeSource();
+    source.add(new ComposerPsr4Source());
+    await builder.build(source);
     console.log("Class index ready");
+    
+    const watcher = new WorkspaceWatcher(builder, registry);
+    watcher.start();
+    context.subscriptions.push(watcher);
 
     await diIndex.build();
     console.log("DI index ready");
@@ -48,7 +54,7 @@ export async function activate(
         vscode.commands.registerCommand(
             "magento.refreshIndex",
             async () => {
-                await builder.build(roots, registry);
+                await builder.build(source);
                 vscode.window.showInformationMessage("Magento index rebuilt");
             }
         )
