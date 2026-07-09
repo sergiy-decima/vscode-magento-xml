@@ -4,15 +4,12 @@ import { PhpTypeKind } from "../ast/PhpTypeKind";
 import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
 
-export interface PhpParserInterface {
-    parse(): PhpType[];
-    parseFirst(): PhpType | undefined;
+export interface PhpParserInterface<T> {
+    parse(): T[];
 }
 
 /**
- * PHP type scanner.
- *
- * Знаходить PHP-типи:
+ * PHP type parser. Finds PHP types:
  * - namespace
  * - class
  * - interface
@@ -22,13 +19,12 @@ export interface PhpParserInterface {
  * - implements
  * - trait usage
  */
-export class PhpTypeParser extends PhpParserBase implements PhpParserInterface {
+export class PhpTypeParser extends PhpParserBase implements PhpParserInterface<PhpType> {
     constructor(stream: PhpTokenStream) {
         super(stream);
     }
 
     public parse(): PhpType[] {
-        // const scanner = new PhpTypeParser(document.content);
         const result: PhpType[] = [];
         let namespace = "";
         while (!this.eof()) {
@@ -48,11 +44,6 @@ export class PhpTypeParser extends PhpParserBase implements PhpParserInterface {
         }
 
         return result;
-    }
-
-    public parseFirst(): PhpType | undefined {
-        const list = this.parse();
-        return list[0];
     }
 
     private readNamespace(): string {
@@ -80,13 +71,10 @@ export class PhpTypeParser extends PhpParserBase implements PhpParserInterface {
         return parts.join("\\");
     }
 
-    private readPhpType(
-        namespace: string,
-        keyword: TokenType
-    ): PhpType | undefined {
+    private readPhpType(namespace: string, keyword: TokenType): PhpType | undefined {
         this.next();
         if (this.tokenType() !== TokenType.Identifier) {
-            return;
+            return undefined;
         }
 
         const nameToken = this.token();
