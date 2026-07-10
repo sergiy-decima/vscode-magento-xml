@@ -1,25 +1,24 @@
 import * as vscode from "vscode";
-
 import { TypeBuilder } from "../index/TypeBuilder";
-import { TypeRegistry } from "../index/TypeRegistry";
 
 /**
+ * Watches PHP files and keeps TypeRegistry up to date.
  * Реагує на зміни у файловій системі.
  * Watches workspace PHP files and updates the type registry incrementally.
+ * PHP file created -> buildFile() -> PHP file changed -> buildFile() -> PHP file deleted -> removeFile()
  */
 export class WorkspaceWatcher implements vscode.Disposable {
     private readonly watcher: vscode.FileSystemWatcher;
-    private readonly pending = new Set<string>();
+    private readonly pendingFiles = new Set<string>();
     private timer: NodeJS.Timeout | undefined;
 
     public constructor(
-        private readonly builder: TypeBuilder,
-        private readonly registry: TypeRegistry
+        private readonly builder: TypeBuilder
     ) {
-        this.watcher = vscode.workspace.createFileSystemWatcher("_magento/**/*.php");
+        this.watcher = vscode.workspace.createFileSystemWatcher("**/*.php");
         this.watcher.onDidCreate( uri => void this.onCreated(uri) );
         this.watcher.onDidChange( uri => void this.onChanged(uri) );
-        this.watcher.onDidDelete( uri => this.onDeleted(uri) );
+        this.watcher.onDidDelete(this.onDeleted, this);
     }
 
     /**
@@ -29,24 +28,36 @@ export class WorkspaceWatcher implements vscode.Disposable {
         console.log("Workspace watcher started.");
     }
 
+    /**
+     * Dispose watcher.
+     */
     public dispose(): void {
         this.watcher.dispose();
     }
 
+    /**
+     * PHP file created.
+     */
     private async onCreated(uri: vscode.Uri): Promise<void> {
         this.enqueue(uri.fsPath);
     }
 
+    /**
+     * PHP file changed.
+     */
     private async onChanged(uri: vscode.Uri): Promise<void> {
-        this.registry.removeByFile(uri.fsPath);
         this.enqueue(uri.fsPath);
     }
 
+    /**
+     * PHP file deleted.
+     */
     private onDeleted(uri: vscode.Uri): void {
-        this.registry.removeByFile(uri.fsPath);
+        this.builder.removeFile(uri.fsPath);
+        console.log(`[TypeRegistry] removed: ${uri.fsPath}`);
     }
 
-    private schedule(): void {
+    private scheduleFlush(): void {
         if (this.timer) {
             clearTimeout(this.timer);
         }
@@ -55,16 +66,17 @@ export class WorkspaceWatcher implements vscode.Disposable {
 
     private async flush(): Promise<void> {
         this.timer = undefined;
-        const files = [...this.pending];
-        this.pending.clear();
+        const files = [...this.pendingFiles];
+        this.pendingFiles.clear();
         for (const file of files) {
-            this.registry.removeByFile(file);
+            this.builder.removeFile(file);
             await this.builder.buildFile(file);
+            console.log(`[TypeRegistry] saved: ${file}`);
         }
     }
 
     private enqueue(file: string): void {
-        this.pending.add(file);
-        this.schedule();
+        this.pendingFiles.add(file);
+        this.scheduleFlush();
     }
 }

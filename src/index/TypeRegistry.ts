@@ -11,22 +11,25 @@ export class TypeRegistry
 
     public clear(): void {
         this.map.clear();
+        this.fileMap.clear();
     }
 
     public add(entry: TypeEntry): void {
         this.map.set(entry.fqcn, entry);
-        if (entry.file) {
-            let types = this.fileMap.get(entry.file);
-            if (!types) {
-                types = new Set<string>();
-                this.fileMap.set(entry.file, types);
-            }
-            types.add(entry.fqcn);
+        let types = this.fileMap.get(entry.file);
+        if (!types) {
+            types = new Set<string>();
+            this.fileMap.set(entry.file, types);
         }
+        types.add(entry.fqcn);
     }
 
     public has(fqcn: string): boolean {
         return this.map.has(fqcn);
+    }
+
+    public hasFile(file: string): boolean {
+        return this.fileMap.has(file);
     }
 
     public find(fqcn: string): TypeEntry | undefined {
@@ -45,38 +48,32 @@ export class TypeRegistry
     }
 
     public remove(fqcn: string): boolean {
-        const type = this.map.get(fqcn);
-        if (!type) {
+        const entry = this.map.get(fqcn);
+        if (!entry) {
             return false;
         }
         
         this.map.delete(fqcn);
 
-        if (type.file) {
-            const types = this.fileMap.get(type.file);
-            if (types) {
-                types.delete(fqcn);
-                if (types.size === 0) {
-                    this.fileMap.delete(type.file);
-                }
-            }
+        const types = this.fileMap.get(entry.file);
+        types?.delete(fqcn);
+        if (types?.size === 0) {
+            this.fileMap.delete(entry.file);
         }
 
         return true;
     }
 
-    public removeByFile(file: string): number {
+    public removeByFile(file: string): void {
         const types = this.fileMap.get(file);
         if (!types) {
-            return 0;
+            return;
         }
 
-        const fqcnList = [...types];
-        for (const fqcn of fqcnList) {
-            this.remove(fqcn);
+        for (const fqcn of types) {
+            this.map.delete(fqcn);
         }
-
-        return fqcnList.length;
+        this.fileMap.delete(file);
     }
 
     public all(): readonly TypeEntry[] {
@@ -98,5 +95,12 @@ export class TypeRegistry
      */
     public size(): number {
         return this.map.size;
+    }
+
+    /**
+     * @returns 
+     */
+    public files(): IterableIterator<string> {
+        return this.fileMap.keys();
     }
 }

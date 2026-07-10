@@ -25,8 +25,9 @@ export async function activate(
     await builder.build(source);
     console.log("Class index ready");
     
-    const watcher = new WorkspaceWatcher(builder, registry);
-    watcher.start();
+    // const watcher = new TypeRegistryWatcher(builder);
+    const watcher = new WorkspaceWatcher(builder);
+    console.log("TypeRegistryWatcher created");
     context.subscriptions.push(watcher);
 
     await diIndex.build();

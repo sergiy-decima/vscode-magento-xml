@@ -14,6 +14,7 @@ import { PhpTokenStream } from "../php/parser/PhpTokenStream";
  * 
  * Builds PHP type entry (index).
  * PSR-4 roots -> PHP files -> PhpType -> TypeEntry
+ * Workspace -> PHP files -> PhpLexer -> PhpTokenStream -> PhpTypeParser -> TypeEntryFactory -> TypeRegistry
  */
 export class TypeBuilder {
     private readonly reader = new TypeDocumentReader();
@@ -23,6 +24,7 @@ export class TypeBuilder {
     }
 
     /**
+     * Full workspace indexing.
      * Повне будування індексу.
      * Будує індекс класів з PSR-4 roots
      * Build type registry from PSR-4 roots
@@ -36,10 +38,12 @@ export class TypeBuilder {
     }
 
     /**
+     * Rebuild single PHP file.
      * Індексує один PHP-файл.
      * Index a single PHP file.
      */
     public async buildFile(file: string): Promise<void> {
+        this.registry.removeByFile(file);
         const document = await this.reader.read(file);
         const lexer = new PhpLexer(document.content);
         const stream =new PhpTokenStream(lexer);
@@ -48,5 +52,10 @@ export class TypeBuilder {
         for (const phpType of phpTypes) {
             this.registry.add( this.factory.create(document.file, phpType) );
         }
+    }
+
+    public removeFile(file: string): void {
+        this.registry.removeByFile(file);
+        console.log(`[Index] Removed ${file}`);
     }
 }
