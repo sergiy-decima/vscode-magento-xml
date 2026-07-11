@@ -2,6 +2,7 @@ import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
 import { PhpType } from "../ast/PhpType";
 import { TokenType } from "../lexer/TokenType";
+import { PhpMethodParser } from "./PhpMethodParser";
 
 /**
  * Parses class/interface/trait/enum body.
@@ -115,6 +116,12 @@ export class PhpClassBodyParser extends PhpParserBase {
         visibility: "public" | "protected" | "private",
         isStatic: boolean
     ): void {
+        const parser = new PhpMethodParser(this.stream);
+        const method = parser.parse(visibility, isStatic);
+        if (method) {
+            type.methods.push(method);
+        }
+
         this.skipUntilSemicolonOrBlock();
     }
 

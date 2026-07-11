@@ -67,6 +67,16 @@ export class TypeBuilder {
             //         property.isReadonly
             //     );
             // }
+
+            // for (const method of phpType.methods) {
+            //     console.log(
+            //         "METHOD:",
+            //         method.visibility,
+            //         method.isStatic,
+            //         method.name,
+            //         method.returnType
+            //     );
+            // }
         }
     }
 

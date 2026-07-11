@@ -71,7 +71,8 @@ export interface PhpMethod {
     name: string;
     visibility: "public" | "protected" | "private";
     isStatic: boolean,
-    // returnType: "array",
+    returnType?: string,
     parameters: [],
     offset: number;
+    length: number;
 }
