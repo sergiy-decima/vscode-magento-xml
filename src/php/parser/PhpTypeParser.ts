@@ -1,30 +1,50 @@
-import { TokenType } from "../lexer/TokenType";
 import { PhpType } from "../ast/PhpType";
 import { PhpTypeKind } from "../ast/PhpTypeKind";
+import { TokenType } from "../lexer/TokenType";
+import { PhpReferenceList } from "./PhpReferenceList";
+import { PhpClassBodyParser } from "./PhpClassBodyParser";
 import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
-import { PhpClassBodyParser } from "./PhpClassBodyParser";
 
 /**
- * PHP type parser. Finds PHP types:
- * - namespace
- * - class
- * - interface
- * - trait
- * - enum
+ * Parses PHP type declarations:
+ *
+ * class
+ * interface
+ * trait
+ * enum
+ *
+ * Handles:
  * - extends
  * - implements
- * - trait usage
+ * - class body
  */
-export class PhpTypeParser extends PhpParserBase
-{
-    constructor(stream: PhpTokenStream) {
+export class PhpTypeParser extends PhpParserBase {
+    private readonly bodyParser: PhpClassBodyParser;
+
+    public constructor(
+        stream: PhpTokenStream,
+        references: PhpReferenceList
+    ) {
         super(stream);
+        this.bodyParser = new PhpClassBodyParser(stream, references);
     }
 
     /**
-     * Parses a single type declaration.
-     *
+     * Current token is a type keyword.
+     */
+    public isTypeKeyword(): boolean {
+        return (
+            this.tokenType() === TokenType.Class ||
+            this.tokenType() === TokenType.Interface ||
+            this.tokenType() === TokenType.Trait ||
+            this.tokenType() === TokenType.Enum
+        );
+    }
+
+    /**
+     * Parses one type declaration.
+     * 
      * Returns undefined if current token is not a type keyword.
      */
     public parseType(namespace: string): PhpType | undefined {
@@ -35,6 +55,11 @@ export class PhpTypeParser extends PhpParserBase
         return this.readPhpType(namespace, this.tokenType());
     }
 
+    /**
+     * Reads:
+     *
+     * class Foo extends Bar implements Baz
+     */
     private readPhpType(namespace: string, keyword: TokenType): PhpType | undefined {
         this.next();
         if (this.tokenType() !== TokenType.Identifier) {
@@ -57,15 +82,20 @@ export class PhpTypeParser extends PhpParserBase
             properties: [],
             methods: []
         };
+
         this.next();
         this.readTypeHeader(type);
-
-        const bodyParser = new PhpClassBodyParser(this.stream);
-        bodyParser.parse(type);
+        this.bodyParser.parse(type);
 
         return type;
     }
 
+    /**
+     * Reads:
+     *
+     * extends Foo
+     * implements A, B
+     */
     private readTypeHeader(type: PhpType): void {
         while (!this.eof()) {
             if (this.match(TokenType.Extends)) {
@@ -79,19 +109,14 @@ export class PhpTypeParser extends PhpParserBase
             }
 
             if (this.match(TokenType.OpenBrace)) {
+                /*
+                 * Body parser expects to start
+                 * inside the body.
+                 */
                 return;
             }
             this.next();
         }
-    }
-
-    protected isTypeKeyword(): boolean {
-        return (
-            this.tokenType() === TokenType.Class ||
-            this.tokenType() === TokenType.Interface ||
-            this.tokenType() === TokenType.Trait ||
-            this.tokenType() === TokenType.Enum
-        );
     }
 
     private mapKind(token: TokenType): PhpTypeKind {

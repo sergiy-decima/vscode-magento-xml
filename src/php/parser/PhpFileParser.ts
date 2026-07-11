@@ -1,15 +1,26 @@
 import { PhpFile } from "../ast/PhpFile";
 import { PhpImport } from "../ast/PhpImport";
+import { PhpReferenceList } from "./PhpReferenceList";
+import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
 import { PhpTypeParser } from "./PhpTypeParser";
 import { TokenType } from "../lexer/TokenType";
 
 /**
  * Parses a complete PHP file.
+ *
+ * Coordinates parsing of:
+ *  - namespace
+ *  - imports
+ *  - PHP types
  */
-export class PhpFileParser extends PhpTypeParser {
+export class PhpFileParser extends PhpParserBase {
+    private readonly references = new PhpReferenceList();
+    private readonly typeParser: PhpTypeParser;
+
     public constructor(stream: PhpTokenStream) {
         super(stream);
+        this.typeParser = new PhpTypeParser(stream, this.references);
     }
 
     /**
@@ -19,7 +30,8 @@ export class PhpFileParser extends PhpTypeParser {
         const file: PhpFile = {
             namespace: undefined,
             imports: [],
-            types: []
+            types: [],
+            references: []
         };
 
         while (!this.eof()) {
@@ -33,8 +45,9 @@ export class PhpFileParser extends PhpTypeParser {
                 continue;
             }
 
-            if (this.isTypeKeyword()) {
-                const type = this.parseType(file.namespace ?? "");
+            if (this.typeParser.isTypeKeyword()) {
+                const type = this.typeParser.parseType(file.namespace ?? "");
+
                 if (type) {
                     file.types.push(type);
                 }
@@ -42,6 +55,7 @@ export class PhpFileParser extends PhpTypeParser {
             }
             this.next();
         }
+        file.references = [...this.references.values()];
 
         return file;
     }
@@ -49,7 +63,7 @@ export class PhpFileParser extends PhpTypeParser {
     /**
      * Reads namespace declaration.
      */
-    protected readNamespace(): string {
+    private readNamespace(): string {
         const parts: string[] = [];
         while (!this.eof()) {
             if (this.tokenType() === TokenType.Identifier) {
@@ -91,6 +105,9 @@ export class PhpFileParser extends PhpTypeParser {
         }
         this.match(TokenType.Semicolon);
 
-        return {fqcn, alias};
+        return {
+            fqcn,
+            alias
+        };
     }
 }

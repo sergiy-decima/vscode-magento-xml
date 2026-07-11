@@ -1,25 +1,36 @@
 import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
+import { PhpReferenceList } from "./PhpReferenceList";
 import { PhpType } from "../ast/PhpType";
 import { TokenType } from "../lexer/TokenType";
 import { PhpMethodParser } from "./PhpMethodParser";
 
 /**
  * Parses class/interface/trait/enum body.
- *
+ * 
+ * Example:
  * {
- *     use ...
- *     private ...
- *     public function ...
+ *     use SomeTrait;
+ *
+ *     private string $name;
+ *
+ *     public function execute()
+ *     {
+ *     }
  * }
  */
 export class PhpClassBodyParser extends PhpParserBase {
-    public constructor(stream: PhpTokenStream) {
+    public constructor(
+        stream: PhpTokenStream,
+        private readonly references: PhpReferenceList
+    ) {
         super(stream);
     }
 
     /**
-     * Parse type body.
+     * Parse body.
+     *
+     * Parser starts after opening "{"
      */
     public parse(type: PhpType): void {
         let level = 1;
@@ -34,11 +45,24 @@ export class PhpClassBodyParser extends PhpParserBase {
                 continue;
             }
 
+            /*
+             * Nested blocks:
+             *
+             * function foo()
+             * {
+             *     ...
+             * }
+             */
             if (level !== 1) {
                 this.next();
                 continue;
             }
 
+            /*
+             * Trait usage:
+             *
+             * use Vendor\TraitName;
+             */
             if (this.match(TokenType.Use)) {
                 type.traits.push(...this.readNameList());
                 this.match(TokenType.Semicolon);
@@ -54,6 +78,12 @@ export class PhpClassBodyParser extends PhpParserBase {
                 continue;
             }
 
+            /*
+             * Class member:
+             *
+             * public $x;
+             * private function foo()
+             */
             if (this.isVisibility()) {
                 this.readMember(type);
                 continue;
@@ -121,7 +151,15 @@ export class PhpClassBodyParser extends PhpParserBase {
         if (method) {
             type.methods.push(method);
         }
-
+        /*
+         * Поки тільки пропускаємо метод.
+         *
+         * Наступним кроком:
+         * - параметри
+         * - return type
+         * - body
+         * - references
+         */
         this.skipUntilSemicolonOrBlock();
     }
 
