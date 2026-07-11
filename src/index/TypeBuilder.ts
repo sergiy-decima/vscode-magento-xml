@@ -56,6 +56,17 @@ export class TypeBuilder {
         this.fileCache.set(document.file, phpFile);
         for (const phpType of phpFile.types) {
             this.registry.add( this.factory.create(document.file, phpType) );
+            // console.log("CLASS:", phpType.fqcn);
+            // for (const property of phpType.properties) {
+            //     console.log(
+            //         "PROPERTY:",
+            //         property.visibility,
+            //         property.type,
+            //         property.name,
+            //         property.isStatic,
+            //         property.isReadonly
+            //     );
+            // }
         }
     }
 

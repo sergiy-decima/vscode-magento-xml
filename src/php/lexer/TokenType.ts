@@ -26,5 +26,11 @@ export enum TokenType {
     Static,
     Variable,
     Arrow,
+    OpenParen,
+    CloseParen,
+    Colon,
+    Equals,
+    Ampersand,
+    Question,
     EOF
 }

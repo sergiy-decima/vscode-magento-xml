@@ -60,10 +60,18 @@ export interface PhpType {
 export interface PhpProperty {
     name: string;
     type?: string;
+    visibility: "public" | "protected" | "private";
+    isStatic: boolean;
+    isReadonly: boolean;
     offset: number;
+    length: number;
 }
 
 export interface PhpMethod {
     name: string;
+    visibility: "public" | "protected" | "private";
+    isStatic: boolean,
+    // returnType: "array",
+    parameters: [],
     offset: number;
 }

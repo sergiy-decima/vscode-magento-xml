@@ -97,6 +97,66 @@ export class PhpLexer {
                     length: 1
                 };
                 return this.current.type;
+
+            case "(":
+                this.pos++;
+                this.current = {
+                    type: TokenType.OpenParen,
+                    text: "(",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
+
+            case ")":
+                this.pos++;
+                this.current = {
+                    type: TokenType.CloseParen,
+                    text: ")",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
+
+            case ":":
+                this.pos++;
+                this.current = {
+                    type: TokenType.Colon,
+                    text: ":",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
+
+            case "=":
+                this.pos++;
+                this.current = {
+                    type: TokenType.Equals,
+                    text: "=",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
+
+            case "&":
+                this.pos++;
+                this.current = {
+                    type: TokenType.Ampersand,
+                    text: "&",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
+
+            case "?":
+                this.pos++;
+                this.current = {
+                    type: TokenType.Question,
+                    text: "?",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
         }
 
         if (ch === "$") {

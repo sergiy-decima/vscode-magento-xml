@@ -3,10 +3,7 @@ import { PhpType } from "../ast/PhpType";
 import { PhpTypeKind } from "../ast/PhpTypeKind";
 import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
-
-export interface PhpParserInterface<T> {
-    // parse(): T[];
-}
+import { PhpClassBodyParser } from "./PhpClassBodyParser";
 
 /**
  * PHP type parser. Finds PHP types:
@@ -19,33 +16,11 @@ export interface PhpParserInterface<T> {
  * - implements
  * - trait usage
  */
-export class PhpTypeParser extends PhpParserBase //implements PhpParserInterface<PhpType> 
+export class PhpTypeParser extends PhpParserBase
 {
     constructor(stream: PhpTokenStream) {
         super(stream);
     }
-
-    // public parse(): PhpType[] {
-    //     const result: PhpType[] = [];
-    //     let namespace = "";
-    //     while (!this.eof()) {
-    //         if (this.match(TokenType.Namespace)) {
-    //             namespace = this.readNamespace();
-    //             continue;
-    //         }
-
-    //         if (this.isTypeKeyword()) {
-    //             const type = this.readPhpType(namespace, this.tokenType());
-    //             if (type) {
-    //                 result.push(type);
-    //             }
-    //             continue;
-    //         }
-    //         this.next();
-    //     }
-
-    //     return result;
-    // }
 
     /**
      * Parses a single type declaration.
@@ -58,31 +33,6 @@ export class PhpTypeParser extends PhpParserBase //implements PhpParserInterface
         }
 
         return this.readPhpType(namespace, this.tokenType());
-    }
-
-    protected readNamespace(): string {
-        const parts: string[] = [];
-        while (!this.eof()) {
-            if (this.tokenType() === TokenType.Identifier) {
-                parts.push(this.tokenText());
-                this.next();
-                continue;
-            }
-
-            if (this.match(TokenType.NamespaceSeparator)) {
-                continue;
-            }
-
-            if (
-                this.match(TokenType.Semicolon) ||
-                this.match(TokenType.OpenBrace)
-            ) {
-                break;
-            }
-            break;
-        }
-
-        return parts.join("\\");
     }
 
     private readPhpType(namespace: string, keyword: TokenType): PhpType | undefined {
@@ -109,7 +59,9 @@ export class PhpTypeParser extends PhpParserBase //implements PhpParserInterface
         };
         this.next();
         this.readTypeHeader(type);
-        this.readTypeBody(type);
+
+        const bodyParser = new PhpClassBodyParser(this.stream);
+        bodyParser.parse(type);
 
         return type;
     }
@@ -131,30 +83,6 @@ export class PhpTypeParser extends PhpParserBase //implements PhpParserInterface
             }
             this.next();
         }
-    }
-
-    private readTypeBody(type: PhpType): void {
-        const traits: string[] = [];
-        let level = 1;
-        while (!this.eof() && level > 0) {
-            if (this.match(TokenType.OpenBrace)) {
-                level++;
-                continue;
-            }
-
-            if (this.match(TokenType.CloseBrace)) {
-                level--;
-                continue;
-            }
-
-            if (level === 1 && this.match(TokenType.Use)) {
-                traits.push(...this.readNameList());
-                this.match(TokenType.Semicolon);
-                continue;
-            }
-            this.next();
-        }
-        type.traits = traits;
     }
 
     protected isTypeKeyword(): boolean {
