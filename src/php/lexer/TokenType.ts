@@ -7,6 +7,7 @@ export enum TokenType {
     Extends,
     Implements,
     Use,
+    As,
     Identifier,
     Abstract,
     Final,

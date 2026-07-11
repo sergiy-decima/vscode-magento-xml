@@ -13,6 +13,7 @@ const keywords = new Map<string, TokenType>([
     ["extends", TokenType.Extends],
     ["implements", TokenType.Implements],
     ["use", TokenType.Use],
+    ["as", TokenType.As],
 ]);
 
 export class PhpLexer {

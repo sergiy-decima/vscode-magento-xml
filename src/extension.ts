@@ -8,9 +8,12 @@ import { GoToDiCommand } from "./commands/GoToDiCommand";
 import { CompositeTypeSource } from "./index/CompositeTypeSource";
 import { ComposerPsr4Source } from "./index/ComposerPsr4Source";
 import { WorkspaceWatcher } from "./workspace/WorkspaceWatcher";
+import { TypeRegistryWatcher } from "./index/TypeRegistryWatcher";
+import { PhpFileCache } from "./php/cache/PhpFileCache";
 
 let registry = new TypeRegistry();
-let builder = new TypeBuilder(registry);
+let cache = new PhpFileCache();
+let builder = new TypeBuilder(registry, cache);
 let diIndex = new DiIndex();
 
 export async function activate(
@@ -25,10 +28,8 @@ export async function activate(
     await builder.build(source);
     console.log("Class index ready");
     
-    // const watcher = new TypeRegistryWatcher(builder);
     const watcher = new WorkspaceWatcher(builder);
-    console.log("TypeRegistryWatcher created");
-    context.subscriptions.push(watcher);
+    context.subscriptions.push(watcher.start());
 
     await diIndex.build();
     console.log("DI index ready");
@@ -74,5 +75,5 @@ export async function activate(
 export function deactivate() {}
 
 
-// import {test} from "./test";
-// test();
+import {test} from "./test";
+test();

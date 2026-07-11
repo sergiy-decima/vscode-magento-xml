@@ -2,10 +2,10 @@ import { TypeRegistry } from "./TypeRegistry";
 import { TypeEntryFactory } from "./TypeEntryFactory";
 import { TypeDocumentReader } from "./TypeDocumentReader";
 import { TypeIndexSource } from "./TypeIndexSource";
-
-import { PhpTypeParser } from "../php/parser/PhpTypeParser";
 import { PhpLexer } from "../php/lexer/PhpLexer";
 import { PhpTokenStream } from "../php/parser/PhpTokenStream";
+import { PhpFileParser } from "../php/parser/PhpFileParser";
+import { PhpFileCache } from "../php/cache/PhpFileCache";
 
 /**
  * Координує процес побудови.
@@ -20,7 +20,10 @@ export class TypeBuilder {
     private readonly reader = new TypeDocumentReader();
     private readonly factory = new TypeEntryFactory();
 
-    public constructor(private readonly registry: TypeRegistry) {
+    public constructor(
+        private readonly registry: TypeRegistry,
+        private readonly fileCache: PhpFileCache
+    ) {
     }
 
     /**
@@ -31,10 +34,12 @@ export class TypeBuilder {
      */
     public async build(source: TypeIndexSource): Promise<void> {
         this.registry.clear();
+        this.fileCache.clear();
         for await (const sourceEntry of source.entries()) {
             await this.buildFile(sourceEntry.file);
         }
         console.log(`Indexed PHP types: ${this.registry.size()}`);
+        console.log(`File cache size: ${this.fileCache.size()}`);
     }
 
     /**
@@ -43,19 +48,20 @@ export class TypeBuilder {
      * Index a single PHP file.
      */
     public async buildFile(file: string): Promise<void> {
-        this.registry.removeByFile(file);
         const document = await this.reader.read(file);
         const lexer = new PhpLexer(document.content);
         const stream =new PhpTokenStream(lexer);
-        const parser = new PhpTypeParser(stream);
-        const phpTypes = parser.parse();
-        for (const phpType of phpTypes) {
+        const parser = new PhpFileParser(stream);
+        const phpFile = parser.parse();
+        this.fileCache.set(document.file, phpFile);
+        for (const phpType of phpFile.types) {
             this.registry.add( this.factory.create(document.file, phpType) );
         }
     }
 
     public removeFile(file: string): void {
         this.registry.removeByFile(file);
-        console.log(`[Index] Removed ${file}`);
+        this.fileCache.remove(file);
+        console.log(`[Index] Deleted ${file}`);
     }
 }

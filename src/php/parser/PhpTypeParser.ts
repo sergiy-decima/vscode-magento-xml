@@ -5,7 +5,7 @@ import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
 
 export interface PhpParserInterface<T> {
-    parse(): T[];
+    // parse(): T[];
 }
 
 /**
@@ -19,34 +19,48 @@ export interface PhpParserInterface<T> {
  * - implements
  * - trait usage
  */
-export class PhpTypeParser extends PhpParserBase implements PhpParserInterface<PhpType> {
+export class PhpTypeParser extends PhpParserBase //implements PhpParserInterface<PhpType> 
+{
     constructor(stream: PhpTokenStream) {
         super(stream);
     }
 
-    public parse(): PhpType[] {
-        const result: PhpType[] = [];
-        let namespace = "";
-        while (!this.eof()) {
-            if (this.match(TokenType.Namespace)) {
-                namespace = this.readNamespace();
-                continue;
-            }
+    // public parse(): PhpType[] {
+    //     const result: PhpType[] = [];
+    //     let namespace = "";
+    //     while (!this.eof()) {
+    //         if (this.match(TokenType.Namespace)) {
+    //             namespace = this.readNamespace();
+    //             continue;
+    //         }
 
-            if (this.isTypeKeyword()) {
-                const type = this.readPhpType(namespace, this.tokenType());
-                if (type) {
-                    result.push(type);
-                }
-                continue;
-            }
-            this.next();
+    //         if (this.isTypeKeyword()) {
+    //             const type = this.readPhpType(namespace, this.tokenType());
+    //             if (type) {
+    //                 result.push(type);
+    //             }
+    //             continue;
+    //         }
+    //         this.next();
+    //     }
+
+    //     return result;
+    // }
+
+    /**
+     * Parses a single type declaration.
+     *
+     * Returns undefined if current token is not a type keyword.
+     */
+    public parseType(namespace: string): PhpType | undefined {
+        if (!this.isTypeKeyword()) {
+            return undefined;
         }
 
-        return result;
+        return this.readPhpType(namespace, this.tokenType());
     }
 
-    private readNamespace(): string {
+    protected readNamespace(): string {
         const parts: string[] = [];
         while (!this.eof()) {
             if (this.tokenType() === TokenType.Identifier) {
@@ -141,7 +155,7 @@ export class PhpTypeParser extends PhpParserBase implements PhpParserInterface<P
         type.traits = traits;
     }
 
-    private isTypeKeyword(): boolean {
+    protected isTypeKeyword(): boolean {
         return (
             this.tokenType() === TokenType.Class ||
             this.tokenType() === TokenType.Interface ||

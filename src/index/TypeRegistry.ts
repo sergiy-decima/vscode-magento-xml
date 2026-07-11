@@ -8,22 +8,41 @@ export class TypeRegistry
 {
     private readonly map = new Map<string, TypeEntry>();
     private readonly fileMap = new Map<string, Set<string>>();
+    private readonly shortNameMap = new Map<string, Set<string>>();
 
+    /**
+     * Remove all indexed data.
+     */
     public clear(): void {
         this.map.clear();
         this.fileMap.clear();
+        this.shortNameMap.clear();
     }
 
+    /**
+     * Add type entry.
+     */
     public add(entry: TypeEntry): void {
         this.map.set(entry.fqcn, entry);
-        let types = this.fileMap.get(entry.file);
+        let types = this.fileMap.get(entry.file); // file -> fqcn
         if (!types) {
             types = new Set<string>();
             this.fileMap.set(entry.file, types);
         }
         types.add(entry.fqcn);
+
+        // shortName -> fqcn
+        let shortTypes = this.shortNameMap.get(entry.className);
+        if (!shortTypes) {
+            shortTypes = new Set<string>();
+            this.shortNameMap.set(entry.className, shortTypes);
+        }
+        shortTypes.add(entry.fqcn);
     }
 
+    /**
+     * Check type existence.
+     */
     public has(fqcn: string): boolean {
         return this.map.has(fqcn);
     }
@@ -32,10 +51,16 @@ export class TypeRegistry
         return this.fileMap.has(file);
     }
 
+    /**
+     * Find by FQCN.
+     */
     public find(fqcn: string): TypeEntry | undefined {
         return this.map.get(fqcn);
     }
 
+    /**
+     * Find all types from file.
+     */
     public findByFile(file: string): TypeEntry[] {
         const types = this.fileMap.get(file);
         if (!types) {
@@ -44,9 +69,31 @@ export class TypeRegistry
 
         return [...types]
             .map( fqcn => this.map.get(fqcn) )
-            .filter( (type): type is TypeEntry => type !== undefined );
+            .filter( (entry): entry is TypeEntry => entry !== undefined );
     }
 
+    /**
+     * Find by short class name.
+     *
+     * Example: State
+     * returns: Magento\Framework\App\State
+     */
+    public findByShortName(name: string): TypeEntry[] {
+        const types = this.shortNameMap.get(name);
+        if (!types) {
+            return [];
+        }
+
+        return [...types]
+            .map(fqcn => this.map.get(fqcn))
+            .filter(
+                (entry): entry is TypeEntry => entry !== undefined
+            );
+    }
+
+    /**
+     * Remove type by FQCN.
+     */
     public remove(fqcn: string): boolean {
         const entry = this.map.get(fqcn);
         if (!entry) {
@@ -61,9 +108,21 @@ export class TypeRegistry
             this.fileMap.delete(entry.file);
         }
 
+        // remove from short name index
+        const shortTypes = this.shortNameMap.get(entry.className);
+        if (shortTypes) {
+            shortTypes.delete(fqcn);
+            if (shortTypes.size === 0) {
+                this.shortNameMap.delete(entry.className);
+            }
+        }
+
         return true;
     }
 
+    /**
+     * Remove all types belonging to file.
+     */
     public removeByFile(file: string): void {
         const types = this.fileMap.get(file);
         if (!types) {
@@ -76,14 +135,23 @@ export class TypeRegistry
         this.fileMap.delete(file);
     }
 
+    /**
+     * All indexed entries.
+     */
     public all(): readonly TypeEntry[] {
         return [...this.map.values()];
     }
 
+    /**
+     * Map iterator.
+     */
     public entries(): IterableIterator<[string, TypeEntry]> {
         return this.map.entries();
     }
 
+    /**
+     * Value iterator.
+     */
     public values(): IterableIterator<TypeEntry> {
         return this.map.values();
     }

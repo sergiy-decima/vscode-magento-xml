@@ -16,16 +16,18 @@ export class WorkspaceWatcher implements vscode.Disposable {
         private readonly builder: TypeBuilder
     ) {
         this.watcher = vscode.workspace.createFileSystemWatcher("**/*.php");
-        this.watcher.onDidCreate( uri => void this.onCreated(uri) );
-        this.watcher.onDidChange( uri => void this.onChanged(uri) );
-        this.watcher.onDidDelete(this.onDeleted, this);
     }
 
     /**
      * Starts watching.
      */
-    public start(): void {
+    public start(): WorkspaceWatcher {
+        this.watcher.onDidCreate( uri => void this.onCreated(uri) );
+        this.watcher.onDidChange( uri => void this.onChanged(uri) );
+        this.watcher.onDidDelete(this.onDeleted, this);
         console.log("Workspace watcher started.");
+
+        return this;
     }
 
     /**
@@ -54,7 +56,7 @@ export class WorkspaceWatcher implements vscode.Disposable {
      */
     private onDeleted(uri: vscode.Uri): void {
         this.builder.removeFile(uri.fsPath);
-        console.log(`[TypeRegistry] removed: ${uri.fsPath}`);
+        console.log(`[Index] Removed: ${uri.fsPath}`);
     }
 
     private scheduleFlush(): void {
@@ -69,9 +71,13 @@ export class WorkspaceWatcher implements vscode.Disposable {
         const files = [...this.pendingFiles];
         this.pendingFiles.clear();
         for (const file of files) {
-            this.builder.removeFile(file);
-            await this.builder.buildFile(file);
-            console.log(`[TypeRegistry] saved: ${file}`);
+            try {
+                this.builder.removeFile(file);
+                await this.builder.buildFile(file);
+                console.log(`[Index] Updated: ${file}`);
+            } catch (e) {
+                console.error(e);
+            }
         }
     }
 
