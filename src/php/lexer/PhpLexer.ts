@@ -14,6 +14,11 @@ const keywords = new Map<string, TokenType>([
     ["implements", TokenType.Implements],
     ["use", TokenType.Use],
     ["as", TokenType.As],
+    ["function", TokenType.Function],
+    ["public", TokenType.Public],
+    ["protected", TokenType.Protected],
+    ["private", TokenType.Private],
+    ["static", TokenType.Static],
 ]);
 
 export class PhpLexer {
@@ -92,6 +97,23 @@ export class PhpLexer {
                     length: 1
                 };
                 return this.current.type;
+        }
+
+        if (ch === "$") {
+            this.pos++;
+            while (this.pos < this.source.length && this.isIdentifierPart(this.source[this.pos])) {
+                this.pos++;
+            }
+
+            const text = this.source.substring(start, this.pos);
+            this.current = {
+                type: TokenType.Variable,
+                text,
+                offset: start,
+                length: this.pos - start
+            };
+
+            return this.current.type;
         }
 
         if (this.isIdentifierStart(ch)) {
@@ -196,7 +218,7 @@ export class PhpLexer {
             }
 
             // whitespace
-            if (/\s/.test(ch)) {
+            if (PhpLexer.isWhitespace(ch.charCodeAt(0))) { // або /\s/.test(ch)
                 this.pos++;
                 continue;
             }

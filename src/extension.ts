@@ -8,13 +8,15 @@ import { GoToDiCommand } from "./commands/GoToDiCommand";
 import { CompositeTypeSource } from "./index/CompositeTypeSource";
 import { ComposerPsr4Source } from "./index/ComposerPsr4Source";
 import { WorkspaceWatcher } from "./workspace/WorkspaceWatcher";
-import { TypeRegistryWatcher } from "./index/TypeRegistryWatcher";
 import { PhpFileCache } from "./php/cache/PhpFileCache";
+import { PhpDefinitionProvider } from "./providers/PhpDefinitionProvider";
+import { DocumentManager } from "./vscode/DocumentManager";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
 let builder = new TypeBuilder(registry, cache);
 let diIndex = new DiIndex();
+let documents = new DocumentManager();
 
 export async function activate(
     context: vscode.ExtensionContext
@@ -28,7 +30,7 @@ export async function activate(
     await builder.build(source);
     console.log("Class index ready");
     
-    const watcher = new WorkspaceWatcher(builder);
+    const watcher = new WorkspaceWatcher(builder, documents);
     context.subscriptions.push(watcher.start());
 
     await diIndex.build();
@@ -48,6 +50,13 @@ export async function activate(
             {scheme: "file", language: "xml"},
             new XmlCompletionProvider(registry),
             "\\"
+        )
+    );
+
+    context.subscriptions.push(
+        vscode.languages.registerDefinitionProvider(
+            {scheme: "file", language: "php"},
+            new PhpDefinitionProvider(registry, cache, documents)
         )
     );
 
@@ -75,5 +84,5 @@ export async function activate(
 export function deactivate() {}
 
 
-import {test} from "./test";
-test();
+// import {test} from "./test";
+// test();

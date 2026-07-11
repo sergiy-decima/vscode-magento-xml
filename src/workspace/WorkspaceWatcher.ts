@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { TypeBuilder } from "../index/TypeBuilder";
+import { DocumentManager } from "../vscode/DocumentManager";
 
 /**
  * Watches PHP files and keeps TypeRegistry up to date.
@@ -13,7 +14,8 @@ export class WorkspaceWatcher implements vscode.Disposable {
     private timer: NodeJS.Timeout | undefined;
 
     public constructor(
-        private readonly builder: TypeBuilder
+        private readonly builder: TypeBuilder,
+        private readonly documents: DocumentManager
     ) {
         this.watcher = vscode.workspace.createFileSystemWatcher("**/*.php");
     }
@@ -56,6 +58,7 @@ export class WorkspaceWatcher implements vscode.Disposable {
      */
     private onDeleted(uri: vscode.Uri): void {
         this.builder.removeFile(uri.fsPath);
+        this.documents.remove(uri.fsPath);
         console.log(`[Index] Removed: ${uri.fsPath}`);
     }
 
@@ -72,6 +75,7 @@ export class WorkspaceWatcher implements vscode.Disposable {
         this.pendingFiles.clear();
         for (const file of files) {
             try {
+                this.documents.remove(file);
                 this.builder.removeFile(file);
                 await this.builder.buildFile(file);
                 console.log(`[Index] Updated: ${file}`);

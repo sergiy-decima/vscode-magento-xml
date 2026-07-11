@@ -103,7 +103,9 @@ export class PhpTypeParser extends PhpParserBase //implements PhpParserInterface
             length: nameToken.length,
             extends: undefined,
             implements: [],
-            traits: []
+            traits: [],
+            properties: [],
+            methods: []
         };
         this.next();
         this.readTypeHeader(type);

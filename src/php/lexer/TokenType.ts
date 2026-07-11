@@ -19,5 +19,12 @@ export enum TokenType {
     Comma,
     Attribute,
     Unknown,
+    Function,
+    Public,
+    Protected,
+    Private,
+    Static,
+    Variable,
+    Arrow,
     EOF
 }

@@ -52,4 +52,18 @@ export interface PhpType {
      * Used traits.
      */
     traits: string[];
+
+    properties: PhpProperty[];
+    methods: PhpMethod[];
+}
+
+export interface PhpProperty {
+    name: string;
+    type?: string;
+    offset: number;
+}
+
+export interface PhpMethod {
+    name: string;
+    offset: number;
 }
