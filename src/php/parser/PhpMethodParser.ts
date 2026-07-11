@@ -1,5 +1,6 @@
 import { PhpMethod } from "../ast/PhpType";
 import { TokenType } from "../lexer/TokenType";
+import { PhpParameterParser } from "./PhpParameterParser";
 import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
 
@@ -40,7 +41,9 @@ export class PhpMethodParser extends PhpParserBase {
         if (!this.match(TokenType.OpenParen)) {
             return method;
         }
-        this.skipParameterList();
+        
+        const parameterParser = new PhpParameterParser(this.stream);
+        method.parameters = parameterParser.parse();
 
         // : Type
         if (this.match(TokenType.Colon)) {

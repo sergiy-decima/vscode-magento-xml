@@ -24,10 +24,13 @@ export class ComposerPsr4Source implements TypeIndexSource {
         const roots = await this.discoverRoots();
         for (const root of roots) {
             for await (const file of this.walker.walk(root.directory)) {
-            // for await (const file of this.walker.walk("/Users/sergiy/Sites/zumiez/zumiez-dev-main/_magento/app/code/Zumiez/AddressValidation/Model/Resolver")) {
                 yield {file};
             }
         }
+
+        // for await (const file of this.walker.walk("/Users/sergiy/Sites/zumiez/zumiez-dev-main/_magento/app/code/Zumiez/AddressValidation/Model/Resolver")) {
+        //     yield {file};
+        // }
     }
 
     /**

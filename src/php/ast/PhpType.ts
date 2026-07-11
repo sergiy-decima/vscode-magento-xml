@@ -72,7 +72,12 @@ export interface PhpMethod {
     visibility: "public" | "protected" | "private";
     isStatic: boolean,
     returnType?: string,
-    parameters: [],
+    parameters: PhpParameter[] ,
     offset: number;
     length: number;
+}
+
+export interface PhpParameter {
+    name: string;
+    type?: string;
 }
