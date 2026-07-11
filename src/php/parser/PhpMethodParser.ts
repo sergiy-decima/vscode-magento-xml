@@ -1,7 +1,7 @@
 import { PhpParserBase } from "./PhpParserBase";
-import { PhpTokenStream } from "./PhpTokenStream";
 import { PhpMethod, PhpParameter } from "../ast/PhpType";
 import { TokenType } from "../lexer/TokenType";
+import { PhpTokenStream } from "./PhpTokenStream";
 
 /**
  * Parses PHP method declaration.
@@ -57,8 +57,9 @@ export class PhpMethodParser extends PhpParserBase {
 
         // : Type
         if (this.match(TokenType.Colon)) {
-            method.returnType = this.readQualifiedName();
+            method.returnType = this.readReturnType();
         }
+        method.length = this.token().offset - method.offset;
 
         return method;
     }
@@ -121,6 +122,21 @@ export class PhpMethodParser extends PhpParserBase {
      * int
      */
     private readParameterType(): string | undefined {
+        let nullable = false;
+        if (this.tokenType() === TokenType.Question) {
+            nullable = true;
+            this.next();
+        }
+
+        const type = this.readQualifiedName();
+        if (!type) {
+            return undefined;
+        }
+
+        return nullable ? `?${type}` : type;
+    }
+
+    private readReturnType(): string | undefined {
         let nullable = false;
         if (this.tokenType() === TokenType.Question) {
             nullable = true;
