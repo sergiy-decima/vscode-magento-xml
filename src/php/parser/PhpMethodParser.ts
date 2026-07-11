@@ -1,15 +1,17 @@
-import { PhpMethod } from "../ast/PhpType";
-import { TokenType } from "../lexer/TokenType";
-import { PhpParameterParser } from "./PhpParameterParser";
 import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
+import { PhpMethod, PhpParameter } from "../ast/PhpType";
+import { TokenType } from "../lexer/TokenType";
 
 /**
  * Parses PHP method declaration.
  *
  * Example:
  *
- * public function execute(): void {}
+ * public function execute(
+ *     LoggerInterface $logger,
+ *     int $id
+ * ): ResultInterface
  * protected static function create(): Foo {}
  */
 export class PhpMethodParser extends PhpParserBase {
@@ -17,6 +19,13 @@ export class PhpMethodParser extends PhpParserBase {
         super(stream);
     }
 
+    /**
+     * Parse method after "function" token.
+     *
+     * Current token:
+     *
+     * execute
+     */
     public parse(
         visibility: "public" | "protected" | "private",
         isStatic: boolean
@@ -37,26 +46,85 @@ export class PhpMethodParser extends PhpParserBase {
         };
         this.next();
 
-        // (
-        if (!this.match(TokenType.OpenParen)) {
-            return method;
+        /*
+         * (
+         *   parameters
+         * )
+         */
+        if (this.match(TokenType.OpenParen)) {
+            method.parameters = this.readParameters();
         }
-        
-        const parameterParser = new PhpParameterParser(this.stream);
-        method.parameters = parameterParser.parse();
 
         // : Type
         if (this.match(TokenType.Colon)) {
-            method.returnType = this.readType();
+            method.returnType = this.readQualifiedName();
         }
 
         return method;
     }
 
-    private readType(): string | undefined {
+    /**
+     * Reads:
+     *
+     * (
+     *     Foo $foo,
+     *     int $id
+     * )
+     */
+    private readParameters(): PhpParameter[] {
+        const parameters: PhpParameter[] = [];
+        while (!this.eof()) {
+            /*
+             * )
+             */
+            if (this.match(TokenType.CloseParen)) {
+                break;
+            }
+
+            const type = this.readParameterType();
+            if (this.tokenType() !== TokenType.Variable) {
+                this.next();
+                continue;
+            }
+
+            const variable = this.token();
+            parameters.push({
+                name: variable.text.substring(1),
+                type,
+                offset: variable.offset,
+                length: variable.length
+            });
+            this.next();
+
+            /*
+             * default value:
+             *
+             * $id = 10
+             *
+             * Skip until:
+             *
+             * ,
+             * )
+             */
+            this.skipDefaultValue();
+            this.match(TokenType.Comma);
+        }
+
+        return parameters;
+    }
+
+    /**
+     * Reads:
+     *
+     * ?Foo
+     * Foo
+     * int
+     */
+    private readParameterType(): string | undefined {
         let nullable = false;
-        if (this.match(TokenType.Question)) {
+        if (this.tokenType() === TokenType.Question) {
             nullable = true;
+            this.next();
         }
 
         const type = this.readQualifiedName();
@@ -67,17 +135,22 @@ export class PhpMethodParser extends PhpParserBase {
         return nullable ? `?${type}` : type;
     }
 
-    private skipParameterList(): void {
-        let level = 1;
-        while (!this.eof() && level > 0) {
-            if (this.match(TokenType.OpenParen)) {
-                level++;
-                continue;
-            }
-
-            if (this.match(TokenType.CloseParen)) {
-                level--;
-                continue;
+    /**
+     * Skip:
+     *
+     * = defaultValue
+     *
+     * Example:
+     *
+     * $x = new Foo()
+     */
+    private skipDefaultValue(): void {
+        while (!this.eof()) {
+            if (
+                this.tokenType() === TokenType.Comma ||
+                this.tokenType() === TokenType.CloseParen
+            ) {
+                return;
             }
             this.next();
         }

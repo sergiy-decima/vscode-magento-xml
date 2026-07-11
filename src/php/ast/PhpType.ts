@@ -80,4 +80,6 @@ export interface PhpMethod {
 export interface PhpParameter {
     name: string;
     type?: string;
+    offset: number;
+    length: number;
 }

@@ -196,7 +196,7 @@ export class PhpClassBodyParser extends PhpParserBase {
 
     private readPropertyType(): string | undefined {
         let nullable = false;
-        if (this.tokenType() === TokenType.Unknown && this.tokenText() === "?") {
+        if (this.tokenType() === TokenType.Question) {
             nullable = true;
             this.next();
         }

@@ -66,7 +66,9 @@ export class PhpParameterParser extends PhpParserBase {
 
         return {
             name: variable.text.substring(1),
-            type
+            type,
+            offset: variable.offset,
+            length: variable.length
         };
     }
 
