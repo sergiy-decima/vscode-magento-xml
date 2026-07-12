@@ -6,6 +6,14 @@ import { TokenType } from "../lexer/TokenType";
 import { PhpTypeNameParser } from "./PhpTypeNameParser";
 
 export class PhpMethodBodyParser extends PhpParserBase {
+    private readonly typeParser: PhpTypeNameParser;
+    public constructor(
+        stream: PhpTokenStream,
+        private readonly references: PhpReferenceList
+    ) {
+        super(stream);
+        this.typeParser = new PhpTypeNameParser(stream);
+    }
     public parse(): void {
         this.skipBlock();
     }
