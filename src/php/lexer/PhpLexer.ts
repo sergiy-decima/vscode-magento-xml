@@ -19,6 +19,8 @@ const keywords = new Map<string, TokenType>([
     ["protected", TokenType.Protected],
     ["private", TokenType.Private],
     ["static", TokenType.Static],
+    ["new", TokenType.New],
+    ["instanceof", TokenType.Instanceof],
 ]);
 
 export class PhpLexer {
@@ -119,6 +121,17 @@ export class PhpLexer {
                 return this.current.type;
 
             case ":":
+                if (this.source[this.pos + 1] === ":") {
+                    this.pos += 2;
+                    this.current = {
+                        type: TokenType.DoubleColon,
+                        text: "::",
+                        offset: start,
+                        length: 2
+                    };
+                    return this.current.type;
+                }
+                
                 this.pos++;
                 this.current = {
                     type: TokenType.Colon,

@@ -6,6 +6,7 @@ import { TokenType } from "../lexer/TokenType";
 import { PhpMethodParser } from "./PhpMethodParser";
 import { PhpReferenceKind } from "../ast/PhpReference";
 import { PhpTypeNameParser } from "./PhpTypeNameParser";
+import { PhpMethodBodyParser } from "./PhpMethodBodyParser";
 
 /**
  * Parses class/interface/trait/enum body.
@@ -156,16 +157,21 @@ export class PhpClassBodyParser extends PhpParserBase {
         if (method) {
             type.methods.push(method);
         }
+
         /*
-         * Поки тільки пропускаємо метод.
-         *
-         * Наступним кроком:
-         * - параметри
-         * - return type
-         * - body
-         * - references
-         */
-        this.skipUntilSemicolonOrBlock();
+        * Після парсингу сигнатури
+        *
+        * поточний токен:
+        * {
+        *     ...
+        * }
+        * або
+        * ;
+        */
+        if (this.tokenType() === TokenType.OpenBrace) {
+            const bodyParser = new PhpMethodBodyParser(this.stream, this.references);
+            bodyParser.parse();
+        }
     }
 
     private readProperty(
@@ -175,17 +181,16 @@ export class PhpClassBodyParser extends PhpParserBase {
         isReadonly: boolean
     ): void {
         let propertyType: string | undefined;
+        const typeOffset = this.token().offset;
         const parsed = this.typeNameParser.parse();
         if (parsed) {
-            propertyType = parsed.text;
-            for (const name of parsed.names) {
-                this.references.add(
-                    name,
-                    parsed.offset,
-                    parsed.length,
-                    PhpReferenceKind.PropertyType
-                );
-            }
+            propertyType = parsed;
+            this.references.add(
+                parsed.replace(/^\?/, ""),
+                typeOffset,
+                parsed.length,
+                PhpReferenceKind.PropertyType
+            );
         }
 
         if (this.tokenType() !== TokenType.Variable) {

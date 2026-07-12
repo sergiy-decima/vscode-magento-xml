@@ -44,8 +44,11 @@ export enum PhpReferenceKind {
     New,
     StaticCall,
     StaticAccess,
-    ClassConstant,
     Instanceof,
     Catch,
-    Attribute
+    Attribute,
+    StaticMethod,
+    StaticProperty,
+    StaticConstant,
+    ClassConstant,
 }

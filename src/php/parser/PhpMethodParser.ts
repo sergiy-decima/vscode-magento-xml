@@ -57,30 +57,35 @@ export class PhpMethodParser extends PhpParserBase {
         this.next();
 
         /*
-         * (
-         *     ...
-         * )
-         */
+        * Parameters:
+        * (
+        *     Foo $foo
+        * )
+        */
         if (this.match(TokenType.OpenParen)) {
             method.parameters = this.readParameters();
         }
 
-        // : Type
+        /*
+        * Return type:
+        * : Foo
+        */
         if (this.match(TokenType.Colon)) {
-            // method.returnType = this.readReturnType();
-            const parsed = this.typeNameParser.parse();
-            if (parsed) {
-                method.returnType = parsed.text;
-                for (const name of parsed.names) {
-                    this.references.add(
-                        name,
-                        parsed.offset,
-                        parsed.length,
-                        PhpReferenceKind.ReturnType
-                    );
-                }
-            }
+            method.returnType = this.readReturnType();
         }
+
+        /*
+        * Move through possible whitespace/comments
+        * already handled by lexer.
+        *
+        * Current token should now be:
+        *
+        * {
+        *     method body
+        * }
+        * or:
+        * ;
+        */
         method.length = this.token().offset - method.offset;
 
         return method;
@@ -100,33 +105,32 @@ export class PhpMethodParser extends PhpParserBase {
             if (this.match(TokenType.CloseParen)) {
                 break;
             }
-            // const type = this.readParameterType();
-            let type: string | undefined;
-            const parsed = this.typeNameParser.parse();
-            if (parsed) {
-                type = parsed.text;
-                for (const name of parsed.names) {
-                    this.references.add(
-                        name,
-                        parsed.offset,
-                        parsed.length,
-                        PhpReferenceKind.ParameterType
-                    );
-                }
-            }
 
+            const start = this.token();
+            const typeParser = new PhpTypeNameParser(this.stream);
+            const type = typeParser.parse();
             if (this.tokenType() !== TokenType.Variable) {
                 this.next();
                 continue;
             }
 
             const variable = this.token();
+            if (type) {
+                this.references.add(
+                    type.replace(/^\?/, ""),
+                    start.offset,
+                    start.length,
+                    PhpReferenceKind.ParameterType
+                );
+            }
+
             parameters.push({
                 name: variable.text.substring(1),
                 type,
                 offset: variable.offset,
                 length: variable.length
             });
+
             this.next();
 
             /*
@@ -162,5 +166,22 @@ export class PhpMethodParser extends PhpParserBase {
             }
             this.next();
         }
+    }
+
+    private readReturnType(): string | undefined {
+        const typeParser = new PhpTypeNameParser(this.stream);
+        const type = typeParser.parse();
+        if (!type) {
+            return undefined;
+        }
+
+        this.references.add(
+            type.replace(/^\?/, ""),
+            this.token().offset,
+            type.length,
+            PhpReferenceKind.ReturnType
+        );
+
+        return type;
     }
 }

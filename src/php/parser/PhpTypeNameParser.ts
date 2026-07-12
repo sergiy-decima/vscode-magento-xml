@@ -1,4 +1,3 @@
-import { PhpTypeName } from "../ast/PhpTypeName";
 import { TokenType } from "../lexer/TokenType";
 import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
@@ -6,57 +5,72 @@ import { PhpTokenStream } from "./PhpTokenStream";
 /**
  * Parses PHP type declarations.
  *
- * Supported:
+ * Supports:
  *
  * Foo
  * ?Foo
  * Foo|Bar
  * Foo&Bar
- * Foo|Bar&Baz
+ * Foo|null
+ * (пізніше можна додати callable, array<int>, Closure(A):B тощо)
  */
 export class PhpTypeNameParser extends PhpParserBase {
     public constructor(stream: PhpTokenStream) {
         super(stream);
     }
 
-    public parse(): PhpTypeName | undefined {
-        const start = this.tokenOffset();
-        let text = "";
-        const names: string[] = [];
-
+    /**
+     * Reads a PHP type declaration.
+     */
+    public parse(): string | undefined {
+        let nullable = false;
         if (this.match(TokenType.Question)) {
-            text += "?";
+            nullable = true;
         }
 
-        while (!this.eof()) {
-            const name = this.readQualifiedName();
-            if (!name) {
-                break;
-            }
+        const parts: string[] = [];
+        const first = this.readTypePart();
+        if (!first) {
+            return undefined;
+        }
 
-            names.push(name);
-            text += name;
+        parts.push(first);
+        while (true) {
             if (this.match(TokenType.Pipe)) {
-                text += "|";
+                const next = this.readTypePart();
+                if (!next) {
+                    break;
+                }
+                parts.push("|");
+                parts.push(next);
                 continue;
             }
 
             if (this.match(TokenType.Ampersand)) {
-                text += "&";
+                const next = this.readTypePart();
+                if (!next) {
+                    break;
+                }
+                parts.push("&");
+                parts.push(next);
                 continue;
             }
             break;
         }
+        const type = parts.join("");
 
-        if (names.length === 0) {
-            return;
+        return nullable ? `?${type}` : type;
+    }
+
+    private readTypePart(): string | undefined {
+        if (
+            this.tokenType() === TokenType.Static
+        ) {
+            const value = this.tokenText();
+            this.next();
+            return value;
         }
 
-        return {
-            text,
-            names,
-            offset: start,
-            length: this.tokenOffset() - start
-        };
+        return this.readQualifiedName();
     }
 }

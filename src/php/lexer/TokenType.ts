@@ -33,5 +33,8 @@ export enum TokenType {
     Ampersand,
     Question,
     Pipe,
+    New,
+    Instanceof,
+    DoubleColon,
     EOF
 }
