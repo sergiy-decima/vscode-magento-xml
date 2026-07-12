@@ -148,6 +148,16 @@ export class PhpLexer {
                 };
                 return this.current.type;
 
+            case "|":
+                this.pos++;
+                this.current = {
+                    type: TokenType.Pipe,
+                    text: "|",
+                    offset: start,
+                    length: 1
+                };
+                return this.current.type;
+
             case "?":
                 this.pos++;
                 this.current = {

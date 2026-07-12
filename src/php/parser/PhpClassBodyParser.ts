@@ -5,6 +5,7 @@ import { PhpType } from "../ast/PhpType";
 import { TokenType } from "../lexer/TokenType";
 import { PhpMethodParser } from "./PhpMethodParser";
 import { PhpReferenceKind } from "../ast/PhpReference";
+import { PhpTypeNameParser } from "./PhpTypeNameParser";
 
 /**
  * Parses class/interface/trait/enum body.
@@ -21,11 +22,14 @@ import { PhpReferenceKind } from "../ast/PhpReference";
  * }
  */
 export class PhpClassBodyParser extends PhpParserBase {
+    private readonly typeNameParser: PhpTypeNameParser;
+
     public constructor(
         stream: PhpTokenStream,
         private readonly references: PhpReferenceList
     ) {
         super(stream);
+        this.typeNameParser = new PhpTypeNameParser(stream);
     }
 
     /**
@@ -170,14 +174,18 @@ export class PhpClassBodyParser extends PhpParserBase {
         isStatic: boolean,
         isReadonly: boolean
     ): void {
-        const propertyType = this.readPropertyType();
-        if (propertyType) {
-            this.references.add(
-                propertyType.replace(/^\?/, ""),
-                this.token().offset,
-                propertyType.length,
-                PhpReferenceKind.PropertyType
-            );
+        let propertyType: string | undefined;
+        const parsed = this.typeNameParser.parse();
+        if (parsed) {
+            propertyType = parsed.text;
+            for (const name of parsed.names) {
+                this.references.add(
+                    name,
+                    parsed.offset,
+                    parsed.length,
+                    PhpReferenceKind.PropertyType
+                );
+            }
         }
 
         if (this.tokenType() !== TokenType.Variable) {
@@ -202,21 +210,6 @@ export class PhpClassBodyParser extends PhpParserBase {
             }
             this.next();
         }
-    }
-
-    private readPropertyType(): string | undefined {
-        let nullable = false;
-        if (this.tokenType() === TokenType.Question) {
-            nullable = true;
-            this.next();
-        }
-
-        const type = this.readQualifiedName();
-        if (!type) {
-            return undefined;
-        }
-
-        return nullable ? `?${type}` : type;
     }
 
     private skipUntilSemicolonOrBlock(): void {

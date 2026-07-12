@@ -4,6 +4,7 @@ import { PhpReferenceList } from "./PhpReferenceList";
 import { PhpMethod, PhpParameter } from "../ast/PhpType";
 import { PhpReferenceKind } from "../ast/PhpReference";
 import { TokenType } from "../lexer/TokenType";
+import { PhpTypeNameParser } from "./PhpTypeNameParser";
 
 /**
  * Parses PHP method declaration.
@@ -18,11 +19,14 @@ import { TokenType } from "../lexer/TokenType";
  * }
  */
 export class PhpMethodParser extends PhpParserBase {
+    private readonly typeNameParser: PhpTypeNameParser;
+
     public constructor(
         stream: PhpTokenStream,
         private readonly references: PhpReferenceList
     ) {
         super(stream);
+        this.typeNameParser = new PhpTypeNameParser(stream);
     }
 
     /**
@@ -63,7 +67,19 @@ export class PhpMethodParser extends PhpParserBase {
 
         // : Type
         if (this.match(TokenType.Colon)) {
-            method.returnType = this.readReturnType();
+            // method.returnType = this.readReturnType();
+            const parsed = this.typeNameParser.parse();
+            if (parsed) {
+                method.returnType = parsed.text;
+                for (const name of parsed.names) {
+                    this.references.add(
+                        name,
+                        parsed.offset,
+                        parsed.length,
+                        PhpReferenceKind.ReturnType
+                    );
+                }
+            }
         }
         method.length = this.token().offset - method.offset;
 
@@ -84,7 +100,21 @@ export class PhpMethodParser extends PhpParserBase {
             if (this.match(TokenType.CloseParen)) {
                 break;
             }
-            const type = this.readParameterType();
+            // const type = this.readParameterType();
+            let type: string | undefined;
+            const parsed = this.typeNameParser.parse();
+            if (parsed) {
+                type = parsed.text;
+                for (const name of parsed.names) {
+                    this.references.add(
+                        name,
+                        parsed.offset,
+                        parsed.length,
+                        PhpReferenceKind.ParameterType
+                    );
+                }
+            }
+
             if (this.tokenType() !== TokenType.Variable) {
                 this.next();
                 continue;
@@ -114,60 +144,6 @@ export class PhpMethodParser extends PhpParserBase {
         }
 
         return parameters;
-    }
-
-    /**
-     * Reads parameter type.
-     *
-     * Foo
-     * ?Foo
-     * int
-     */
-    private readParameterType(): string | undefined {
-        let nullable = false;
-        if (this.match(TokenType.Question)) {
-            nullable = true;
-        }
-
-        const typeToken = this.token();
-        const type = this.readQualifiedName();
-        if (!type) {
-            return undefined;
-        }
-
-        this.references.add(
-            type,
-            typeToken.offset,
-            typeToken.length,
-            PhpReferenceKind.ParameterType
-        );
-
-        return nullable ? `?${type}` : type;
-    }
-
-    /**
-     * Reads return type.
-     */
-    private readReturnType(): string | undefined {
-        let nullable = false;
-        if (this.match(TokenType.Question)) {
-            nullable = true;
-        }
-
-        const typeToken = this.token();
-        const type = this.readQualifiedName();
-        if (!type) {
-            return undefined;
-        }
-
-        this.references.add(
-            type,
-            typeToken.offset,
-            typeToken.length,
-            PhpReferenceKind.ReturnType
-        );
-
-        return nullable ? `?${type}` : type;
     }
 
     /**

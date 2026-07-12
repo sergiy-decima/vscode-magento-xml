@@ -32,5 +32,6 @@ export enum TokenType {
     Equals,
     Ampersand,
     Question,
+    Pipe,
     EOF
 }

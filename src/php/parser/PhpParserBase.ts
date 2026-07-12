@@ -37,6 +37,13 @@ export abstract class PhpParserBase {
     }
 
     /**
+     * Зсув від початку джерела.
+     */
+    protected tokenOffset(): number {
+        return this.stream.token().offset;
+    }
+
+    /**
      * Перехід на наступний токен
      */
     protected next(): void {
