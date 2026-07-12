@@ -1,7 +1,9 @@
 import { PhpParserBase } from "./PhpParserBase";
-import { PhpMethod, PhpParameter } from "../ast/PhpType";
-import { TokenType } from "../lexer/TokenType";
 import { PhpTokenStream } from "./PhpTokenStream";
+import { PhpReferenceList } from "./PhpReferenceList";
+import { PhpMethod, PhpParameter } from "../ast/PhpType";
+import { PhpReferenceKind } from "../ast/PhpReference";
+import { TokenType } from "../lexer/TokenType";
 
 /**
  * Parses PHP method declaration.
@@ -12,15 +14,19 @@ import { PhpTokenStream } from "./PhpTokenStream";
  *     LoggerInterface $logger,
  *     int $id
  * ): ResultInterface
- * protected static function create(): Foo {}
+ * {
+ * }
  */
 export class PhpMethodParser extends PhpParserBase {
-    public constructor(stream: PhpTokenStream) {
+    public constructor(
+        stream: PhpTokenStream,
+        private readonly references: PhpReferenceList
+    ) {
         super(stream);
     }
 
     /**
-     * Parse method after "function" token.
+     * Parse method after "function" keyword.
      *
      * Current token:
      *
@@ -39,16 +45,16 @@ export class PhpMethodParser extends PhpParserBase {
             name: nameToken.text,
             visibility,
             isStatic,
-            offset: nameToken.offset,
-            length: nameToken.length,
             parameters: [],
-            returnType: undefined
+            returnType: undefined,
+            offset: nameToken.offset,
+            length: nameToken.length
         };
         this.next();
 
         /*
          * (
-         *   parameters
+         *     ...
          * )
          */
         if (this.match(TokenType.OpenParen)) {
@@ -65,8 +71,7 @@ export class PhpMethodParser extends PhpParserBase {
     }
 
     /**
-     * Reads:
-     *
+     * Reads parameter list.
      * (
      *     Foo $foo,
      *     int $id
@@ -75,13 +80,10 @@ export class PhpMethodParser extends PhpParserBase {
     private readParameters(): PhpParameter[] {
         const parameters: PhpParameter[] = [];
         while (!this.eof()) {
-            /*
-             * )
-             */
+            // )
             if (this.match(TokenType.CloseParen)) {
                 break;
             }
-
             const type = this.readParameterType();
             if (this.tokenType() !== TokenType.Variable) {
                 this.next();
@@ -115,50 +117,64 @@ export class PhpMethodParser extends PhpParserBase {
     }
 
     /**
-     * Reads:
+     * Reads parameter type.
      *
-     * ?Foo
      * Foo
+     * ?Foo
      * int
      */
     private readParameterType(): string | undefined {
         let nullable = false;
-        if (this.tokenType() === TokenType.Question) {
+        if (this.match(TokenType.Question)) {
             nullable = true;
-            this.next();
         }
 
+        const typeToken = this.token();
         const type = this.readQualifiedName();
         if (!type) {
             return undefined;
         }
 
-        return nullable ? `?${type}` : type;
-    }
-
-    private readReturnType(): string | undefined {
-        let nullable = false;
-        if (this.tokenType() === TokenType.Question) {
-            nullable = true;
-            this.next();
-        }
-
-        const type = this.readQualifiedName();
-        if (!type) {
-            return undefined;
-        }
+        this.references.add(
+            type,
+            typeToken.offset,
+            typeToken.length,
+            PhpReferenceKind.ParameterType
+        );
 
         return nullable ? `?${type}` : type;
     }
 
     /**
-     * Skip:
+     * Reads return type.
+     */
+    private readReturnType(): string | undefined {
+        let nullable = false;
+        if (this.match(TokenType.Question)) {
+            nullable = true;
+        }
+
+        const typeToken = this.token();
+        const type = this.readQualifiedName();
+        if (!type) {
+            return undefined;
+        }
+
+        this.references.add(
+            type,
+            typeToken.offset,
+            typeToken.length,
+            PhpReferenceKind.ReturnType
+        );
+
+        return nullable ? `?${type}` : type;
+    }
+
+    /**
+     * Skip default parameter value.
      *
-     * = defaultValue
-     *
-     * Example:
-     *
-     * $x = new Foo()
+     * $id = 10
+     * $foo = new Foo()
      */
     private skipDefaultValue(): void {
         while (!this.eof()) {

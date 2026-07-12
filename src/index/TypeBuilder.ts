@@ -65,20 +65,25 @@ export class TypeBuilder {
             //         "PROPERTY:",
             //         property.visibility,
             //         property.type,
-            //         property.name,
-            //         property.isStatic,
-            //         property.isReadonly
+            //         property.name
             //     );
             // }
-
             // for (const method of phpType.methods) {
             //     console.log(
             //         "METHOD:",
             //         method.visibility,
             //         method.isStatic,
             //         method.name,
+            //         "return:",
             //         method.returnType
             //     );
+            //     for (const param of method.parameters) {
+            //         console.log(
+            //             "PARAM:",
+            //             param.type,
+            //             param.name
+            //         );
+            //     }
             // }
         }
     }

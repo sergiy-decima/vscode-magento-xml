@@ -4,6 +4,7 @@ import { PhpReferenceList } from "./PhpReferenceList";
 import { PhpType } from "../ast/PhpType";
 import { TokenType } from "../lexer/TokenType";
 import { PhpMethodParser } from "./PhpMethodParser";
+import { PhpReferenceKind } from "../ast/PhpReference";
 
 /**
  * Parses class/interface/trait/enum body.
@@ -146,7 +147,7 @@ export class PhpClassBodyParser extends PhpParserBase {
         visibility: "public" | "protected" | "private",
         isStatic: boolean
     ): void {
-        const parser = new PhpMethodParser(this.stream);
+        const parser = new PhpMethodParser(this.stream, this.references);
         const method = parser.parse(visibility, isStatic);
         if (method) {
             type.methods.push(method);
@@ -170,6 +171,15 @@ export class PhpClassBodyParser extends PhpParserBase {
         isReadonly: boolean
     ): void {
         const propertyType = this.readPropertyType();
+        if (propertyType) {
+            this.references.add(
+                propertyType.replace(/^\?/, ""),
+                this.token().offset,
+                propertyType.length,
+                PhpReferenceKind.PropertyType
+            );
+        }
+
         if (this.tokenType() !== TokenType.Variable) {
             this.skipUntilSemicolonOrBlock();
             return;
