@@ -11,6 +11,7 @@ import { WorkspaceWatcher } from "./workspace/WorkspaceWatcher";
 import { PhpFileCache } from "./php/cache/PhpFileCache";
 import { PhpDefinitionProvider } from "./providers/PhpDefinitionProvider";
 import { DocumentManager } from "./vscode/DocumentManager";
+import { DefinitionResolver } from "./resolvers/DefinitionResolver";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -36,11 +37,13 @@ export async function activate(
     await diIndex.build();
     console.log("DI index ready");
 
+    const definitionResolver = new DefinitionResolver(registry, diIndex);
+
     // 🔥 2. Definition provider (Ctrl+Click)
     context.subscriptions.push(
         vscode.languages.registerDefinitionProvider(
             {scheme: "file", language: "xml"},
-            new XmlDefinitionProvider(registry, diIndex)
+            new XmlDefinitionProvider(definitionResolver)
         )
     );
 
