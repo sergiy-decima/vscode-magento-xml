@@ -2,10 +2,10 @@ import * as vscode from "vscode";
 import { PhpTypeKind } from "../php/ast/PhpTypeKind";
 import { AbstractPhpTypeCompletionStrategy } from "./AbstractPhpTypeCompletionStrategy";
 
-export class VirtualTypeTypeCompletionStrategy
+export class PluginTypeCompletionStrategy
     extends AbstractPhpTypeCompletionStrategy
 {
-    public readonly key = "virtualType:type";
+    public readonly key = "plugin:type";
 
     protected readonly phpKinds = [
         PhpTypeKind.Class

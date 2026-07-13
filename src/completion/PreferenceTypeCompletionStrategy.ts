@@ -1,40 +1,18 @@
 import * as vscode from "vscode";
-import { TypeRegistry } from "../index/TypeRegistry";
 import { PhpTypeKind } from "../php/ast/PhpTypeKind";
-import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
-import { ICompletionStrategy } from "./ICompletionStrategy";
+import { AbstractPhpTypeCompletionStrategy } from "./AbstractPhpTypeCompletionStrategy";
 
 export class PreferenceTypeCompletionStrategy
-    implements ICompletionStrategy
+    extends AbstractPhpTypeCompletionStrategy
 {
     public readonly key = "preference:type";
 
-    constructor(
-        private registry: TypeRegistry
-    ) {}
+    protected readonly phpKinds = [
+        PhpTypeKind.Class
+    ];
 
-    public complete(
-        document: vscode.TextDocument,
-        position: vscode.Position,
-        match: XmlAttributeMatch
-    ): vscode.CompletionItem[]
-    {
-        return this.registry
-            .search(match.value, [PhpTypeKind.Class])
-            .map(type => {
+    protected readonly completionKind =
+        vscode.CompletionItemKind.Class;
 
-                const item = new vscode.CompletionItem(
-                    type.fqcn,
-                    vscode.CompletionItemKind.Class
-                );
-
-                item.insertText = type.fqcn;
-                item.filterText = type.fqcn;
-                item.sortText = type.fqcn;
-                item.detail = "PHP Class";
-
-                return item;
-
-            });
-    }
+    protected readonly detail = "PHP Class";
 }

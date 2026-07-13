@@ -1,40 +1,18 @@
 import * as vscode from "vscode";
-import { TypeRegistry } from "../index/TypeRegistry";
 import { PhpTypeKind } from "../php/ast/PhpTypeKind";
-import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
-import { ICompletionStrategy } from "./ICompletionStrategy";
+import { AbstractPhpTypeCompletionStrategy } from "./AbstractPhpTypeCompletionStrategy";
 
 export class PreferenceCompletionStrategy
-    implements ICompletionStrategy
+    extends AbstractPhpTypeCompletionStrategy
 {
     public readonly key = "preference:for";
 
-    constructor(
-        private registry: TypeRegistry
-    ) {}
+    protected readonly phpKinds = [
+        PhpTypeKind.Interface
+    ];
 
-    public complete(
-        document: vscode.TextDocument,
-        position: vscode.Position,
-        match: XmlAttributeMatch
-    ): vscode.CompletionItem[]
-    {
-        return this.registry
-            .search(match.value, [PhpTypeKind.Interface])
-            .map(type => {
+    protected readonly completionKind =
+        vscode.CompletionItemKind.Interface;
 
-                const item = new vscode.CompletionItem(
-                    type.fqcn,
-                    vscode.CompletionItemKind.Interface
-                );
-
-                item.insertText = type.fqcn;
-                item.filterText = type.fqcn;
-                item.sortText = type.fqcn;
-                item.detail = "PHP Interface";
-
-                return item;
-
-            });
-    }
+    protected readonly detail = "PHP Interface";
 }
