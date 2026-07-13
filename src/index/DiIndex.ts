@@ -15,29 +15,27 @@ export interface DiReference {
     length: number;
 }
 
-export interface PreferenceEntry {
+interface DiLocation
+{
+    uri: vscode.Uri;
+    offset: number;
+    length: number;
+}
+
+export interface PreferenceEntry extends DiLocation {
     for: string;
     type: string;
-    uri: vscode.Uri;
-    offset: number;
-    length: number;
 }
 
-export interface VirtualTypeEntry {
+export interface VirtualTypeEntry extends DiLocation {
     name: string;
     type: string;
-    uri: vscode.Uri;
-    offset: number;
-    length: number;
 }
 
-export interface PluginEntry {
+export interface PluginEntry extends DiLocation {
     name: string;
     type: string;
     plugin: string;
-    uri: vscode.Uri;
-    offset: number;
-    length: number;
 }
 
 export interface TypeEntry {
@@ -58,7 +56,7 @@ export class DiIndex {
     /**
      * Нові індекси.
      */
-    private readonly preferences = new Map<string, PreferenceEntry>();
+    private readonly preferences = new Map<string, PreferenceEntry[]>();
 
     private readonly virtualTypes = new Map<string, VirtualTypeEntry>();
 
@@ -88,7 +86,16 @@ export class DiIndex {
 
             const doc = await vscode.workspace.openTextDocument(file);
 
-            const nodes = this.scanner.scanDi(doc.getText(), file);
+            const nodes = this.scanner.scan(
+                doc.getText(),
+                file,
+                [
+                    "type",
+                    "preference",
+                    "virtualType",
+                    "plugin"
+                ]
+            );
 
             for (const node of nodes) {
                 this.consume(node);
@@ -128,9 +135,9 @@ export class DiIndex {
     /**
      * Новий API.
      */
-
-    public findPreference(className: string): PreferenceEntry | undefined {
-        return this.preferences.get(className);
+    public findPreferences(className: string): PreferenceEntry[]
+    {
+        return this.preferences.get(className) ?? [];
     }
 
     public findVirtualType(name: string): VirtualTypeEntry | undefined {
@@ -177,13 +184,15 @@ export class DiIndex {
 
             if (forClass && typeClass) {
 
-                this.preferences.set(forClass, {
+                const list = this.preferences.get(forClass) ?? [];
+                list.push({
                     for: forClass,
                     type: typeClass,
                     uri: node.uri,
                     offset: node.offset,
                     length: node.length
                 });
+                this.preferences.set(forClass, list);
 
                 className = forClass;
 

@@ -48,9 +48,11 @@ export class DefinitionResolver
         //
         // Preference
         //
-        const preference = this.diIndex.findPreference(value);
+        const preferences = this.diIndex.findPreferences(value);
 
-        if (preference) {
+        if (preferences.length > 0) {
+
+            const preference = preferences[0];
 
             const doc = await vscode.workspace.openTextDocument(preference.uri);
 

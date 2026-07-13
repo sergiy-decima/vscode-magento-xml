@@ -10,40 +10,25 @@ export interface XmlNode {
 
 export class XmlScanner 
 {
-    public scanDi(xml: string, uri: vscode.Uri): XmlNode[] {
+    public scan(
+        xml: string,
+        uri: vscode.Uri,
+        tags: string[]
+    ): XmlNode[]
+    {
         const nodes: XmlNode[] = [];
 
-        this.collectTag(
-            xml,
-            uri,
-            /<type\b([^>]*)>/g,
-            "type",
-            nodes
-        );
+        for (const tag of tags) {
 
-        this.collectTag(
-            xml,
-            uri,
-            /<preference\b([^>]*)>/g,
-            "preference",
-            nodes
-        );
+            this.collectTag(
+                xml,
+                uri,
+                new RegExp(`<${tag}\\b([^>]*)>`, "g"),
+                tag,
+                nodes
+            );
 
-        this.collectTag(
-            xml,
-            uri,
-            /<virtualType\b([^>]*)>/g,
-            "virtualType",
-            nodes
-        );
-
-        this.collectTag(
-            xml,
-            uri,
-            /<plugin\b([^>]*)>/g,
-            "plugin",
-            nodes
-        );
+        }
 
         return nodes;
     }
@@ -61,7 +46,7 @@ export class XmlScanner
             const attrs = match[1];
 
             const attributes = new Map<string, string>();
-            const attrRegex = /([a-zA-Z0-9:_-]+)="([^"]+)"/g;
+            const attrRegex = /([a-zA-Z0-9:_-]+)\s*=\s*"([^"]*)"/g;
 
             let a: RegExpExecArray | null;
             while ((a = attrRegex.exec(attrs)) !== null) {
