@@ -3,12 +3,17 @@ import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
 
 export interface ICompletionStrategy
 {
-    supports(
-        match: XmlAttributeMatch
-    ): boolean;
+    /**
+     * Example:
+     * preference:for
+     * preference:type
+     * plugin:type
+     */
+    readonly key: string;
 
     complete(
-        match: XmlAttributeMatch,
-        prefix: string
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        match: XmlAttributeMatch
     ): vscode.CompletionItem[];
 }

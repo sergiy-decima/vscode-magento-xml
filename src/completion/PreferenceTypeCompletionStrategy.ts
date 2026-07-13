@@ -7,27 +7,20 @@ import { ICompletionStrategy } from "./ICompletionStrategy";
 export class PreferenceTypeCompletionStrategy
     implements ICompletionStrategy
 {
+    public readonly key = "preference:type";
+
     constructor(
         private registry: TypeRegistry
     ) {}
 
-    public supports(
-        match: XmlAttributeMatch
-    ): boolean
-    {
-        return (
-            match.tag === "preference"
-            && match.attribute === "type"
-        );
-    }
-
     public complete(
-        match: XmlAttributeMatch,
-        prefix: string
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        match: XmlAttributeMatch
     ): vscode.CompletionItem[]
     {
         return this.registry
-            .search(prefix, [PhpTypeKind.Class])
+            .search(match.value, [PhpTypeKind.Class])
             .map(type => {
 
                 const item = new vscode.CompletionItem(
@@ -35,13 +28,10 @@ export class PreferenceTypeCompletionStrategy
                     vscode.CompletionItemKind.Class
                 );
 
-                item.detail = "PHP Class";
-
                 item.insertText = type.fqcn;
                 item.filterText = type.fqcn;
                 item.sortText = type.fqcn;
-
-                item.range = match.range;
+                item.detail = "PHP Class";
 
                 return item;
 

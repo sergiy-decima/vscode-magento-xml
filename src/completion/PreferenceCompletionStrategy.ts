@@ -7,27 +7,20 @@ import { ICompletionStrategy } from "./ICompletionStrategy";
 export class PreferenceCompletionStrategy
     implements ICompletionStrategy
 {
+    public readonly key = "preference:for";
+
     constructor(
         private registry: TypeRegistry
     ) {}
 
-    public supports(
-        match: XmlAttributeMatch
-    ): boolean
-    {
-        return (
-            match.tag === "preference"
-            && match.attribute === "for"
-        );
-    }
-
     public complete(
-        match: XmlAttributeMatch,
-        prefix: string
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        match: XmlAttributeMatch
     ): vscode.CompletionItem[]
     {
         return this.registry
-            .search(prefix, [PhpTypeKind.Interface])
+            .search(match.value, [PhpTypeKind.Interface])
             .map(type => {
 
                 const item = new vscode.CompletionItem(
@@ -39,8 +32,6 @@ export class PreferenceCompletionStrategy
                 item.filterText = type.fqcn;
                 item.sortText = type.fqcn;
                 item.detail = "PHP Interface";
-
-                item.range = match.range;
 
                 return item;
 

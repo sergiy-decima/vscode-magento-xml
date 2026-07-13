@@ -4,25 +4,34 @@ import { ICompletionStrategy } from "./ICompletionStrategy";
 
 export class CompletionEngine
 {
+    private readonly strategies = new Map<string, ICompletionStrategy>();
+
     constructor(
-        private strategies: ICompletionStrategy[]
-    ) {}
+        strategies: ICompletionStrategy[]
+    ) {
+        for (const strategy of strategies) {
+            this.strategies.set(strategy.key, strategy);
+        }
+    }
 
     public complete(
+        document: vscode.TextDocument,
+        position: vscode.Position,
         match: XmlAttributeMatch
     ): vscode.CompletionItem[]
     {
-        for (const strategy of this.strategies) {
+        const strategy = this.strategies.get(
+            `${match.tag}:${match.attribute}`
+        );
 
-            if (strategy.supports(match)) {
-                return strategy.complete(
-                    match,
-                    match.value
-                );
-            }
-
+        if (!strategy) {
+            return [];
         }
 
-        return [];
+        return strategy.complete(
+            document,
+            position,
+            match
+        );
     }
 }

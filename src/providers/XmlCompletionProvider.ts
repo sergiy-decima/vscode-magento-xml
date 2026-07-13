@@ -22,6 +22,10 @@ export class XmlCompletionProvider implements vscode.CompletionItemProvider
             return [];
         }
 
-        return this.engine.complete(match);
+        return this.engine.complete(
+            document,
+            position,
+            match
+        );
     }
 }
