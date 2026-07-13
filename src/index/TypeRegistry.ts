@@ -195,10 +195,13 @@ export class TypeRegistry
                 continue;
             }
 
-            if (!entry.fqcn.toLowerCase().includes(search)) {
-                continue;
+            const fqcn = entry.fqcn.toLowerCase();
+            if (
+                fqcn.startsWith(search) ||
+                fqcn.includes("\\" + search)
+            ) {
+                result.push(entry);
             }
-            result.push(entry);
         }
 
         return result;

@@ -27,10 +27,7 @@ export class PreferenceCompletionStrategy
     ): vscode.CompletionItem[]
     {
         return this.registry
-            .search(
-                prefix,
-                [PhpTypeKind.Interface]
-            )
+            .search(prefix, [PhpTypeKind.Interface])
             .map(type => {
 
                 const item = new vscode.CompletionItem(
@@ -39,7 +36,11 @@ export class PreferenceCompletionStrategy
                 );
 
                 item.insertText = type.fqcn;
+                item.filterText = type.fqcn;
+                item.sortText = type.fqcn;
                 item.detail = "PHP Interface";
+
+                item.range = match.range;
 
                 return item;
 
