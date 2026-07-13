@@ -17,6 +17,7 @@ import { PreferenceCompletionStrategy } from "./completion/PreferenceCompletionS
 import { PreferenceTypeCompletionStrategy } from "./completion/PreferenceTypeCompletionStrategy";
 import { VirtualTypeTypeCompletionStrategy } from "./completion/VirtualTypeTypeCompletionStrategy";
 import { PluginTypeCompletionStrategy } from "./completion/PluginTypeCompletionStrategy";
+import { CompletionItemFactory } from "./completion/CompletionItemFactory";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -43,11 +44,12 @@ export async function activate(
     console.log("DI index ready");
 
     const definitionResolver = new DefinitionResolver(registry, diIndex);
+    const completionFactory = new CompletionItemFactory();
     const completionEngine = new CompletionEngine([
-        new PreferenceCompletionStrategy(registry),
-        new PreferenceTypeCompletionStrategy(registry),
-        new VirtualTypeTypeCompletionStrategy(registry),
-        new PluginTypeCompletionStrategy(registry)
+        new PreferenceCompletionStrategy(registry, completionFactory),
+        new PreferenceTypeCompletionStrategy(registry, completionFactory),
+        new VirtualTypeTypeCompletionStrategy(registry, completionFactory),
+        new PluginTypeCompletionStrategy(registry, completionFactory)
     ]);
 
     // 🔥 2. Definition provider (Ctrl+Click)

@@ -4,6 +4,7 @@ import { TypeEntry } from "../index/TypeEntry";
 import { PhpTypeKind } from "../php/ast/PhpTypeKind";
 import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
 import { ICompletionStrategy } from "./ICompletionStrategy";
+import { CompletionItemFactory } from "./CompletionItemFactory";
 
 export abstract class AbstractPhpTypeCompletionStrategy
     implements ICompletionStrategy
@@ -17,7 +18,8 @@ export abstract class AbstractPhpTypeCompletionStrategy
     protected abstract readonly detail: string;
 
     constructor(
-        protected readonly registry: TypeRegistry
+        protected readonly registry: TypeRegistry,
+        protected readonly factory: CompletionItemFactory
     ) {}
 
     public complete(
@@ -36,29 +38,11 @@ export abstract class AbstractPhpTypeCompletionStrategy
         type: TypeEntry
     ): vscode.CompletionItem
     {
-        const item = new vscode.CompletionItem(
-            type.fqcn,
-            this.completionKind
+        return this.factory.createPhpType(
+            match,
+            type,
+            this.completionKind,
+            this.detail
         );
-
-        item.insertText = type.fqcn;
-        item.filterText = type.fqcn;
-        item.sortText = type.fqcn;
-        // item.detail = this.detail;
-        
-        item.detail = type.namespace ?? "";
-        // item.description = this.detail;
-        item.label = {
-            label: type.className,
-            description: type.namespace ?? "",
-            detail: ` (${this.detail})`
-        };
-
-        item.textEdit = new vscode.TextEdit(
-            match.range,
-            type.fqcn
-        );
-
-        return item;
     }
 }
