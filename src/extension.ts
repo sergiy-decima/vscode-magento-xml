@@ -14,6 +14,7 @@ import { DocumentManager } from "./vscode/DocumentManager";
 import { DefinitionResolver } from "./resolvers/DefinitionResolver";
 import { CompletionEngine } from "./completion/CompletionEngine";
 import { PreferenceCompletionStrategy } from "./completion/PreferenceCompletionStrategy";
+import { PreferenceTypeCompletionStrategy } from "./completion/PreferenceTypeCompletionStrategy";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -41,7 +42,8 @@ export async function activate(
 
     const definitionResolver = new DefinitionResolver(registry, diIndex);
     const completionEngine = new CompletionEngine([
-        new PreferenceCompletionStrategy(registry)
+        new PreferenceCompletionStrategy(registry),
+        new PreferenceTypeCompletionStrategy(registry)
     ]);
 
     // 🔥 2. Definition provider (Ctrl+Click)
