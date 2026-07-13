@@ -267,4 +267,18 @@ export class DiIndex {
 
         this.map.set(className, list);
     }
+
+    public addPlugin(
+        entry: PluginEntry
+    ): void
+    {
+        let list = this.plugins.get(entry.type);
+
+        if (!list) {
+            list = [];
+            this.plugins.set(entry.type, list);
+        }
+
+        list.push(entry);
+    }
 }
