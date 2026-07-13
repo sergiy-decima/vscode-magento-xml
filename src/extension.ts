@@ -19,6 +19,8 @@ import { VirtualTypeTypeCompletionStrategy } from "./completion/VirtualTypeTypeC
 import { PluginTypeCompletionStrategy } from "./completion/PluginTypeCompletionStrategy";
 import { CompletionItemFactory } from "./completion/CompletionItemFactory";
 import { TypeNameCompletionStrategy } from "./completion/TypeNameCompletionStrategy";
+import { HoverResolver } from "./resolvers/HoverResolver";
+import { XmlHoverProvider } from "./providers/XmlHoverProvider";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -45,6 +47,7 @@ export async function activate(
     console.log("DI index ready");
 
     const definitionResolver = new DefinitionResolver(registry, diIndex);
+    const hoverResolver = new HoverResolver(registry, diIndex);
     const completionFactory = new CompletionItemFactory();
     const completionEngine = new CompletionEngine([
         new PreferenceCompletionStrategy(registry, completionFactory),
@@ -95,6 +98,14 @@ export async function activate(
         vscode.commands.registerCommand(
             "magento.goToDi",
             () => goToDi.execute()
+        )
+    );
+
+    // 🔥 6. Hover in *.xml
+    context.subscriptions.push(
+        vscode.languages.registerHoverProvider(
+            {scheme: "file", language: "xml"},
+            new XmlHoverProvider(hoverResolver)
         )
     );
 }
