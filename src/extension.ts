@@ -12,6 +12,8 @@ import { PhpFileCache } from "./php/cache/PhpFileCache";
 import { PhpDefinitionProvider } from "./providers/PhpDefinitionProvider";
 import { DocumentManager } from "./vscode/DocumentManager";
 import { DefinitionResolver } from "./resolvers/DefinitionResolver";
+import { CompletionEngine } from "./completion/CompletionEngine";
+import { PreferenceCompletionStrategy } from "./completion/PreferenceCompletionStrategy";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -38,6 +40,9 @@ export async function activate(
     console.log("DI index ready");
 
     const definitionResolver = new DefinitionResolver(registry, diIndex);
+    const completionEngine = new CompletionEngine([
+        new PreferenceCompletionStrategy(registry)
+    ]);
 
     // 🔥 2. Definition provider (Ctrl+Click)
     context.subscriptions.push(
@@ -51,7 +56,7 @@ export async function activate(
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider(
             {scheme: "file", language: "xml"},
-            new XmlCompletionProvider(registry),
+            new XmlCompletionProvider(completionEngine),
             "\\"
         )
     );

@@ -7,6 +7,7 @@ export interface XmlAttributeMatch
     value: string;
     valueStart: number;
     valueEnd: number;
+    range: vscode.Range;
 }
 
 export class XmlAttributeResolver
@@ -65,7 +66,11 @@ export class XmlAttributeResolver
                     attribute,
                     value,
                     valueStart: quoteStart,
-                    valueEnd: quoteEnd
+                    valueEnd: quoteEnd,
+                    range: new vscode.Range(
+                        document.positionAt(quoteStart),
+                        document.positionAt(quoteEnd)
+                    )
                 };
 
             }

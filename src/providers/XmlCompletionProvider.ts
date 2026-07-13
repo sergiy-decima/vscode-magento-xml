@@ -1,15 +1,27 @@
 import * as vscode from "vscode";
-import { TypeRegistry } from "../index/TypeRegistry";
+import { CompletionEngine } from "../completion/CompletionEngine";
+import { XmlAttributeResolver } from "../xml/XmlAttributeResolver";
 
-export class XmlCompletionProvider implements vscode.CompletionItemProvider 
+export class XmlCompletionProvider implements vscode.CompletionItemProvider
 {
-    constructor(private registry: TypeRegistry) {}
+    constructor(
+        private engine: CompletionEngine
+    ) {}
 
-    provideCompletionItems(): vscode.CompletionItem[] {
-        return this.registry.all().map(entry => {
-            const item = new vscode.CompletionItem(entry.fqcn);
-            item.kind = vscode.CompletionItemKind.Class;
-            return item;
-        });
+    provideCompletionItems(
+        document: vscode.TextDocument,
+        position: vscode.Position
+    ): vscode.CompletionItem[]
+    {
+        const match = XmlAttributeResolver.resolve(
+            document,
+            position
+        );
+
+        if (!match) {
+            return [];
+        }
+
+        return this.engine.complete(match);
     }
 }

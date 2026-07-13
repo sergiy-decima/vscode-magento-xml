@@ -1,3 +1,4 @@
+import { PhpTypeKind } from "../php/ast/PhpTypeKind";
 import { TypeEntry } from "./TypeEntry";
 
 /**
@@ -170,5 +171,36 @@ export class TypeRegistry
      */
     public files(): IterableIterator<string> {
         return this.fileMap.keys();
+    }
+
+    public findByKind(kind: PhpTypeKind): TypeEntry[]
+    {
+        return [...this.map.values()].filter(
+            entry => entry.kind === kind
+        );
+    }
+
+    public search(
+        prefix: string,
+        kinds?: readonly PhpTypeKind[]
+    ): TypeEntry[]
+    {
+        const search = prefix.toLowerCase();
+        const result: TypeEntry[] = [];
+        for (const entry of this.map.values()) {
+            if (
+                kinds &&
+                !kinds.includes(entry.kind)
+            ) {
+                continue;
+            }
+
+            if (!entry.fqcn.toLowerCase().includes(search)) {
+                continue;
+            }
+            result.push(entry);
+        }
+
+        return result;
     }
 }
