@@ -8,11 +8,12 @@ export class PluginTypeCompletionStrategy
     public readonly key = "plugin:type";
 
     protected readonly phpKinds = [
-        PhpTypeKind.Class
+        PhpTypeKind.Class,
+        PhpTypeKind.Interface
     ];
 
     protected readonly completionKind =
         vscode.CompletionItemKind.Class;
 
-    protected readonly detail = "PHP Class";
+    protected readonly detail = "PHP Type";
 }

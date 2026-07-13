@@ -44,7 +44,15 @@ export abstract class AbstractPhpTypeCompletionStrategy
         item.insertText = type.fqcn;
         item.filterText = type.fqcn;
         item.sortText = type.fqcn;
-        item.detail = this.detail;
+        // item.detail = this.detail;
+        
+        item.detail = type.namespace ?? "";
+        // item.description = this.detail;
+        item.label = {
+            label: type.className,
+            description: type.namespace ?? "",
+            detail: ` (${this.detail})`
+        };
 
         item.textEdit = new vscode.TextEdit(
             match.range,

@@ -16,6 +16,7 @@ import { CompletionEngine } from "./completion/CompletionEngine";
 import { PreferenceCompletionStrategy } from "./completion/PreferenceCompletionStrategy";
 import { PreferenceTypeCompletionStrategy } from "./completion/PreferenceTypeCompletionStrategy";
 import { VirtualTypeTypeCompletionStrategy } from "./completion/VirtualTypeTypeCompletionStrategy";
+import { PluginTypeCompletionStrategy } from "./completion/PluginTypeCompletionStrategy";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -45,7 +46,8 @@ export async function activate(
     const completionEngine = new CompletionEngine([
         new PreferenceCompletionStrategy(registry),
         new PreferenceTypeCompletionStrategy(registry),
-        new VirtualTypeTypeCompletionStrategy(registry)
+        new VirtualTypeTypeCompletionStrategy(registry),
+        new PluginTypeCompletionStrategy(registry)
     ]);
 
     // 🔥 2. Definition provider (Ctrl+Click)
