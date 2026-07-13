@@ -40,7 +40,7 @@ export async function activate(
     context.subscriptions.push(
         vscode.languages.registerDefinitionProvider(
             {scheme: "file", language: "xml"},
-            new XmlDefinitionProvider(registry)
+            new XmlDefinitionProvider(registry, diIndex)
         )
     );
 
