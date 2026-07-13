@@ -15,6 +15,7 @@ import { DefinitionResolver } from "./resolvers/DefinitionResolver";
 import { CompletionEngine } from "./completion/CompletionEngine";
 import { PreferenceCompletionStrategy } from "./completion/PreferenceCompletionStrategy";
 import { PreferenceTypeCompletionStrategy } from "./completion/PreferenceTypeCompletionStrategy";
+import { VirtualTypeTypeCompletionStrategy } from "./completion/VirtualTypeTypeCompletionStrategy";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -43,7 +44,8 @@ export async function activate(
     const definitionResolver = new DefinitionResolver(registry, diIndex);
     const completionEngine = new CompletionEngine([
         new PreferenceCompletionStrategy(registry),
-        new PreferenceTypeCompletionStrategy(registry)
+        new PreferenceTypeCompletionStrategy(registry),
+        new VirtualTypeTypeCompletionStrategy(registry)
     ]);
 
     // 🔥 2. Definition provider (Ctrl+Click)
