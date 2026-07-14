@@ -1,25 +1,27 @@
 import * as vscode from "vscode";
-import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
+import { XmlAttributeMatch } from "../../xml/XmlAttributeResolver";
 import { AbstractDefinitionStrategy } from "./AbstractDefinitionStrategy";
 
-export class PluginDefinitionStrategy
+export class VirtualTypeDefinitionStrategy
     extends AbstractDefinitionStrategy
 {
+    public supports(
+        match: XmlAttributeMatch
+    ): boolean
+    {
+        return match.attribute === "type";
+    }
+
     public async resolve(
         match: XmlAttributeMatch
     ): Promise<vscode.Location | undefined>
     {
-        if (
-            match.tag !== "plugin" ||
-            !this.isAttribute(match, "type")
-        ) {
+        if (!this.isAttribute(match, "type")) {
             return;
         }
 
-        const plugins = this.diIndex.findPlugins(match.value);
-
         return this.toEntryLocation(
-            plugins[0]
+            this.diIndex.findVirtualType(match.value)
         );
     }
 }

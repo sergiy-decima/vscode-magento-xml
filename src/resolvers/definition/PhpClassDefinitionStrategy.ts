@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
+import { XmlAttributeMatch } from "../../xml/XmlAttributeResolver";
 import { AbstractDefinitionStrategy } from "./AbstractDefinitionStrategy";
 
 export class PhpClassDefinitionStrategy

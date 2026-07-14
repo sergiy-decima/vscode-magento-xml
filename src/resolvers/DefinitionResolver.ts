@@ -3,10 +3,10 @@ import { TypeRegistry } from "../index/TypeRegistry";
 import { DiIndex } from "../index/DiIndex";
 import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
 import { IDefinitionStrategy } from "./IDefinitionStrategy";
-import { PhpClassDefinitionStrategy } from "./PhpClassDefinitionStrategy";
-import { VirtualTypeDefinitionStrategy } from "./VirtualTypeDefinitionStrategy";
-import { PreferenceDefinitionStrategy } from "./PreferenceDefinitionStrategy";
-import { PluginDefinitionStrategy } from "./PluginDefinitionStrategy";
+import { PhpClassDefinitionStrategy } from "./definition/PhpClassDefinitionStrategy";
+import { VirtualTypeDefinitionStrategy } from "./definition/VirtualTypeDefinitionStrategy";
+import { PreferenceDefinitionStrategy } from "./definition/PreferenceDefinitionStrategy";
+import { PluginDefinitionStrategy } from "./definition/PluginDefinitionStrategy";
 
 export class DefinitionResolver
 {

@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
-import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
-import { TypeRegistry } from "../index/TypeRegistry";
-import { DiIndex } from "../index/DiIndex";
-import { IDefinitionStrategy } from "./IDefinitionStrategy";
+import { XmlAttributeMatch } from "../../xml/XmlAttributeResolver";
+import { TypeRegistry } from "../../index/TypeRegistry";
+import { DiIndex } from "../../index/DiIndex";
+import { IDefinitionStrategy } from "../IDefinitionStrategy";
 
 export abstract class AbstractDefinitionStrategy
     implements IDefinitionStrategy
