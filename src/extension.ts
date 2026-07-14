@@ -21,6 +21,8 @@ import { CompletionItemFactory } from "./completion/CompletionItemFactory";
 import { TypeNameCompletionStrategy } from "./completion/TypeNameCompletionStrategy";
 import { HoverResolver } from "./resolvers/HoverResolver";
 import { XmlHoverProvider } from "./providers/XmlHoverProvider";
+import { ReferenceResolver } from "./resolvers/ReferenceResolver";
+import { XmlReferenceProvider } from "./providers/XmlReferenceProvider";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -48,6 +50,7 @@ export async function activate(
 
     const definitionResolver = new DefinitionResolver(registry, diIndex);
     const hoverResolver = new HoverResolver(registry, diIndex);
+    const referenceResolver = new ReferenceResolver(diIndex);
     const completionFactory = new CompletionItemFactory();
     const completionEngine = new CompletionEngine([
         new PreferenceCompletionStrategy(registry, completionFactory),
@@ -106,6 +109,19 @@ export async function activate(
         vscode.languages.registerHoverProvider(
             {scheme: "file", language: "xml"},
             new XmlHoverProvider(hoverResolver)
+        )
+    );
+
+    // 🔥 7. XML: Якщо курсор стоїть на класі, і викликати 'Find All References' (Shift + F12), 
+    // ти побачиш усі місця з di.xml, які зараз індексуються цим класом:
+    // - <preference for="...">
+    // - <type name="...">
+    // - <plugin type="...">
+    // - <virtualType name="...">
+    context.subscriptions.push(
+        vscode.languages.registerReferenceProvider(
+            {scheme: "file", language: "xml"},
+            new XmlReferenceProvider(referenceResolver)
         )
     );
 }
