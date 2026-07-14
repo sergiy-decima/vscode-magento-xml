@@ -3,6 +3,7 @@ import { XmlNode } from "../parser/XmlScanner";
 import { PreferenceEntry, PreferenceIndex } from "./di/PreferenceIndex";
 import { PluginEntry, PluginIndex } from "./di/PluginIndex";
 import { VirtualTypeEntry, VirtualTypeIndex } from "./di/VirtualTypeIndex";
+import { TypeEntry, TypeIndex } from "./di/TypeIndex";
 
 export type DiKind =
     | "type"
@@ -20,13 +21,6 @@ export interface DiReference {
 
 interface DiLocation
 {
-    uri: vscode.Uri;
-    offset: number;
-    length: number;
-}
-
-export interface TypeEntry {
-    name: string;
     uri: vscode.Uri;
     offset: number;
     length: number;
@@ -51,7 +45,7 @@ export class DiIndex {
 
     private readonly plugins = new PluginIndex();
 
-    private readonly types = new Map<string, TypeEntry>();
+    private readonly types = new TypeIndex();
 
     /**
      * Старий API.
@@ -92,7 +86,7 @@ export class DiIndex {
     }
 
     public findType(name: string): TypeEntry | undefined {
-        return this.types.get(name);
+        return this.types.find(name);
     }
 
     public consume(node: XmlNode) {
@@ -107,7 +101,7 @@ export class DiIndex {
 
             if (className) {
 
-                this.types.set(className, {
+                this.types.add({
                     name: className,
                     uri: node.uri,
                     offset: node.offset,
@@ -205,6 +199,48 @@ export class DiIndex {
         this.map.set(className, list);
     }
 
+    public addType(
+        entry: TypeEntry
+    ): void
+    {
+        this.types.add(entry);
+    }
+
+    public addPreference(
+        entry: PreferenceEntry
+    ): void
+    {
+        this.preferences.add(entry);
+    }
+
+    public addVirtualType(
+        entry: VirtualTypeEntry
+    ): void
+    {
+        this.virtualTypes.add(entry);
+    }
+
+    public addPlugin(
+        entry: PluginEntry
+    ): void
+    {
+        this.plugins.add(entry);
+    }
+
+    public addReference(
+        entry: DiReference
+    ): void
+    {
+        let list = this.map.get(entry.className);
+
+        if (!list) {
+            list = [];
+            this.map.set(entry.className, list);
+        }
+
+        list.push(entry);
+    }
+
     public clear(): void {
         this.map.clear();
         this.preferences.clear();
@@ -217,7 +253,7 @@ export class DiIndex {
         console.log(`DI entries: ${this.map.size}`);
         console.log(`Preferences: ${this.preferences.size()}`);
         console.log(`VirtualTypes: ${this.virtualTypes.size()}`);
-        console.log(`Types: ${this.types.size}`);
+        console.log(`Types: ${this.types.size()}`);
         console.log(`Plugin targets: ${this.plugins.size()}`);
     }
 }
