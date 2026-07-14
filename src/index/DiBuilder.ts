@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
-import { XmlNode, XmlScanner } from "../parser/XmlScanner";
+import { XmlScanner } from "../parser/XmlScanner";
 import { DiIndex } from "./DiIndex";
 import { DiKind } from "./di/DiReferenceIndex";
+import { XmlNode } from "../xml/XmlNode";
 
 export class DiBuilder
 {
@@ -54,7 +55,7 @@ export class DiBuilder
 
         if (node.name === "type") {
 
-            const name = node.attributes.get("name");
+            const name = node.attribute("name")?.value;
 
             if (name) {
 
@@ -72,8 +73,8 @@ export class DiBuilder
 
         if (node.name === "preference") {
 
-            const forClass = node.attributes.get("for");
-            const typeClass = node.attributes.get("type");
+            const forClass = node.attribute("for")?.value;
+            const typeClass = node.attribute("type")?.value;
 
             if (forClass && typeClass) {
 
@@ -92,8 +93,8 @@ export class DiBuilder
 
         if (node.name === "virtualType") {
 
-            const name = node.attributes.get("name");
-            const type = node.attributes.get("type");
+            const name = node.attribute("name")?.value;
+            const type = node.attribute("type")?.value;
 
             if (name && type) {
 
@@ -112,8 +113,8 @@ export class DiBuilder
 
         if (node.name === "plugin") {
 
-            const target = node.attributes.get("type");
-            const plugin = node.attributes.get("name");
+            const target = node.attribute("type")?.value;
+            const plugin = node.attribute("name")?.value;
 
             if (target && plugin) {
 

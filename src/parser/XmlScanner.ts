@@ -1,12 +1,6 @@
 import * as vscode from "vscode";
-
-export interface XmlNode {
-    name: string;
-    attributes: Map<string, string>;
-    uri: vscode.Uri;
-    offset: number;
-    length: number;
-}
+import { XmlAttribute } from "../xml/XmlAttribute";
+import { XmlNode } from "../xml/XmlNode";
 
 export class XmlScanner 
 {
@@ -39,28 +33,48 @@ export class XmlScanner
         regex: RegExp,
         tagName: string,
         out: XmlNode[]
-    ) {
+    ): void
+    {
         let match: RegExpExecArray | null;
+
         while ((match = regex.exec(xml)) !== null) {
+
             const fullTag = match[0];
             const attrs = match[1];
 
-            const attributes = new Map<string, string>();
-            const attrRegex = /([a-zA-Z0-9:_-]+)\s*=\s*"([^"]*)"/g;
+            const attributes: XmlAttribute[] = [];
 
-            let a: RegExpExecArray | null;
-            while ((a = attrRegex.exec(attrs)) !== null) {
-                attributes.set(a[1], a[2]);
+            const attrRegex = /([a-zA-Z0-9:_-]+)="([^"]+)"/g;
+
+            let attr: RegExpExecArray | null;
+
+            while ((attr = attrRegex.exec(attrs)) !== null) {
+
+                const value = attr[2];
+
+                const valueOffset =
+                    match.index +
+                    fullTag.indexOf(`"${value}"`) +
+                    1;
+
+                attributes.push({
+                    name: attr[1],
+                    value,
+                    offset: valueOffset,
+                    length: value.length
+                });
+
             }
 
-            const offset = match.index;
-            out.push({
-                name: tagName,
-                attributes,
-                uri,
-                offset,
-                length: fullTag.length
-            });
+            out.push(
+                new XmlNode(
+                    tagName,
+                    uri,
+                    match.index,
+                    fullTag.length,
+                    attributes
+                )
+            );
         }
     }
 }
