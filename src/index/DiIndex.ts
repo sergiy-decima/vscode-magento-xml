@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { XmlScanner, XmlNode } from "../parser/XmlScanner";
 import { PreferenceEntry, PreferenceIndex } from "./di/PreferenceIndex";
 import { PluginEntry, PluginIndex } from "./di/PluginIndex";
+import { VirtualTypeEntry, VirtualTypeIndex } from "./di/VirtualTypeIndex";
 
 export type DiKind =
     | "type"
@@ -24,11 +25,6 @@ interface DiLocation
     length: number;
 }
 
-export interface VirtualTypeEntry extends DiLocation {
-    name: string;
-    type: string;
-}
-
 export interface TypeEntry {
     name: string;
     uri: vscode.Uri;
@@ -49,7 +45,7 @@ export class DiIndex {
      */
     private readonly preferences = new PreferenceIndex();
 
-    private readonly virtualTypes = new Map<string, VirtualTypeEntry>();
+    private readonly virtualTypes = new VirtualTypeIndex();
 
     private readonly plugins = new PluginIndex();
 
@@ -95,7 +91,7 @@ export class DiIndex {
 
         console.log(`DI entries: ${this.map.size}`);
         console.log(`Preferences: ${this.preferences.size()}`);
-        console.log(`VirtualTypes: ${this.virtualTypes.size}`);
+        console.log(`VirtualTypes: ${this.virtualTypes.size()}`);
         console.log(`Types: ${this.types.size}`);
         console.log(`Plugin targets: ${this.plugins.size()}`);
     }
@@ -131,7 +127,7 @@ export class DiIndex {
     }
 
     public findVirtualType(name: string): VirtualTypeEntry | undefined {
-        return this.virtualTypes.get(name);
+        return this.virtualTypes.find(name);
     }
 
     public findPlugins(type: string): PluginEntry[] {
@@ -197,7 +193,7 @@ export class DiIndex {
 
             if (name && type) {
 
-                this.virtualTypes.set(name, {
+                this.virtualTypes.add({
                     name,
                     type,
                     uri: node.uri,
