@@ -24,6 +24,8 @@ import { XmlHoverProvider } from "./providers/XmlHoverProvider";
 import { ReferenceResolver } from "./resolvers/ReferenceResolver";
 import { XmlReferenceProvider } from "./providers/XmlReferenceProvider";
 import { DiBuilder } from "./index/DiBuilder";
+import { EventsIndex } from "./index/EventsIndex";
+import { EventsBuilder } from "./index/EventsBuilder";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -31,6 +33,7 @@ let builder = new TypeBuilder(registry, cache);
 let diIndex = new DiIndex();
 let diBuilder = new DiBuilder(diIndex);
 let documents = new DocumentManager();
+let eventsIndex = new EventsIndex();
 
 export async function activate(
     context: vscode.ExtensionContext
@@ -49,6 +52,10 @@ export async function activate(
 
     await diBuilder.build();
     console.log("DI index ready");
+
+    const eventsBuilder = new EventsBuilder(eventsIndex);
+    await eventsBuilder.build();
+    console.log("Events index ready");
 
     const definitionResolver = new DefinitionResolver(registry, diIndex);
     const hoverResolver = new HoverResolver(registry, diIndex);
