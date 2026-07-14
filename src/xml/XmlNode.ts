@@ -3,6 +3,10 @@ import { XmlAttribute } from "./XmlAttribute";
 
 export class XmlNode
 {
+    private readonly attributeMap = new Map<string, XmlAttribute>();
+
+    private readonly childMap = new Map<string, XmlNode[]>();
+
     public readonly children: XmlNode[] = [];
 
     constructor(
@@ -10,28 +14,30 @@ export class XmlNode
         public readonly uri: vscode.Uri,
         public readonly offset: number,
         public readonly length: number,
-        private readonly attributes: XmlAttribute[]
-    ) {}
+        attributes: XmlAttribute[]
+    ) {
+        for (const attribute of attributes) {
+            this.attributeMap.set(attribute.name, attribute);
+        }
+    }
 
     public attribute(
         name: string
     ): XmlAttribute | undefined
     {
-        return this.attributes.find(
-            attr => attr.name === name
-        );
+        return this.attributeMap.get(name);
     }
 
-    public attributesList(): readonly XmlAttribute[]
+    public attributes(): readonly XmlAttribute[]
     {
-        return this.attributes;
+        return [...this.attributeMap.values()];
     }
 
     public hasAttribute(
         name: string
     ): boolean
     {
-        return this.attribute(name) !== undefined;
+        return this.attributeMap.has(name);
     }
 
     public addChild(
@@ -39,23 +45,28 @@ export class XmlNode
     ): void
     {
         this.children.push(child);
+
+        let list = this.childMap.get(child.name);
+
+        if (!list) {
+            list = [];
+            this.childMap.set(child.name, list);
+        }
+
+        list.push(child);
     }
 
     public child(
         name: string
     ): XmlNode | undefined
     {
-        return this.children.find(
-            node => node.name === name
-        );
+        return this.childMap.get(name)?.[0];
     }
 
     public childrenOf(
         name: string
     ): XmlNode[]
     {
-        return this.children.filter(
-            node => node.name === name
-        );
+        return this.childMap.get(name) ?? [];
     }
 }
