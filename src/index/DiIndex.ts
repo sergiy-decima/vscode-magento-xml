@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { XmlScanner, XmlNode } from "../parser/XmlScanner";
-import {PreferenceEntry, PreferenceIndex} from "./di/PreferenceIndex";
+import { PreferenceEntry, PreferenceIndex } from "./di/PreferenceIndex";
+import { PluginEntry, PluginIndex } from "./di/PluginIndex";
 
 export type DiKind =
     | "type"
@@ -28,12 +29,6 @@ export interface VirtualTypeEntry extends DiLocation {
     type: string;
 }
 
-export interface PluginEntry extends DiLocation {
-    name: string;
-    type: string;
-    plugin: string;
-}
-
 export interface TypeEntry {
     name: string;
     uri: vscode.Uri;
@@ -56,7 +51,7 @@ export class DiIndex {
 
     private readonly virtualTypes = new Map<string, VirtualTypeEntry>();
 
-    private readonly plugins = new Map<string, PluginEntry[]>();
+    private readonly plugins = new PluginIndex();
 
     private readonly types = new Map<string, TypeEntry>();
 
@@ -102,7 +97,7 @@ export class DiIndex {
         console.log(`Preferences: ${this.preferences.size()}`);
         console.log(`VirtualTypes: ${this.virtualTypes.size}`);
         console.log(`Types: ${this.types.size}`);
-        console.log(`Plugin targets: ${this.plugins.size}`);
+        console.log(`Plugin targets: ${this.plugins.size()}`);
     }
 
     /**
@@ -131,8 +126,7 @@ export class DiIndex {
     /**
      * Новий API.
      */
-    public findPreferences(className: string): PreferenceEntry[]
-    {
+    public findPreferences(className: string): PreferenceEntry[] {
         return this.preferences.find(className);
     }
 
@@ -141,7 +135,7 @@ export class DiIndex {
     }
 
     public findPlugins(type: string): PluginEntry[] {
-        return this.plugins.get(type) ?? [];
+        return this.plugins.find(type);
     }
 
     public findType(name: string): TypeEntry | undefined {
@@ -226,9 +220,7 @@ export class DiIndex {
 
             if (target && plugin) {
 
-                const list = this.plugins.get(target) ?? [];
-
-                list.push({
+                this.plugins.add({
                     name: plugin,
                     type: target,
                     plugin,
@@ -236,8 +228,6 @@ export class DiIndex {
                     offset: node.offset,
                     length: node.length
                 });
-
-                this.plugins.set(target, list);
 
                 className = target;
 
@@ -260,19 +250,5 @@ export class DiIndex {
         });
 
         this.map.set(className, list);
-    }
-
-    public addPlugin(
-        entry: PluginEntry
-    ): void
-    {
-        let list = this.plugins.get(entry.type);
-
-        if (!list) {
-            list = [];
-            this.plugins.set(entry.type, list);
-        }
-
-        list.push(entry);
     }
 }
