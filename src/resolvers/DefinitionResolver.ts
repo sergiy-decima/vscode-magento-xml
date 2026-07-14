@@ -1,66 +1,52 @@
 import * as vscode from "vscode";
 import { TypeRegistry } from "../index/TypeRegistry";
 import { DiIndex } from "../index/DiIndex";
+import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
+import { IDefinitionStrategy } from "./IDefinitionStrategy";
+import { PhpClassDefinitionStrategy } from "./PhpClassDefinitionStrategy";
+import { VirtualTypeDefinitionStrategy } from "./VirtualTypeDefinitionStrategy";
+import { PreferenceDefinitionStrategy } from "./PreferenceDefinitionStrategy";
+import { PluginDefinitionStrategy } from "./PluginDefinitionStrategy";
 
 export class DefinitionResolver
 {
+    private readonly strategies: IDefinitionStrategy[];
+
     constructor(
-        private registry: TypeRegistry,
-        private diIndex: DiIndex
-    ) {}
+        registry: TypeRegistry,
+        diIndex: DiIndex
+    ) {
+        this.strategies = [
+            new PhpClassDefinitionStrategy(
+                registry,
+                diIndex
+            ),
+            new VirtualTypeDefinitionStrategy(
+                registry,
+                diIndex
+            ),
+            new PreferenceDefinitionStrategy(
+                registry,
+                diIndex
+            ),
+            new PluginDefinitionStrategy(
+                registry,
+                diIndex
+            )
+        ];
+    }
 
     public async resolve(
-        value: string
+        match: XmlAttributeMatch
     ): Promise<vscode.Location | undefined>
     {
-        //
-        // PHP class
-        //
-        const classEntry = this.registry.find(value);
+        for (const strategy of this.strategies) {
 
-        if (classEntry) {
+            const location = await strategy.resolve(match);
 
-            const doc = await vscode.workspace.openTextDocument(classEntry.uri);
-
-            return new vscode.Location(
-                classEntry.uri,
-                doc.positionAt(classEntry.offset)
-            );
-
-        }
-
-        //
-        // VirtualType
-        //
-        const virtualType = this.diIndex.findVirtualType(value);
-
-        if (virtualType) {
-
-            const doc = await vscode.workspace.openTextDocument(virtualType.uri);
-
-            return new vscode.Location(
-                virtualType.uri,
-                doc.positionAt(virtualType.offset)
-            );
-
-        }
-
-        //
-        // Preference
-        //
-        const preferences = this.diIndex.findPreferences(value);
-
-        if (preferences.length > 0) {
-
-            const preference = preferences[0];
-
-            const doc = await vscode.workspace.openTextDocument(preference.uri);
-
-            return new vscode.Location(
-                preference.uri,
-                doc.positionAt(preference.offset)
-            );
-
+            if (location) {
+                return location;
+            }
         }
 
         return;

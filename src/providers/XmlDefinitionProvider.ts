@@ -22,6 +22,6 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
             return;
         }
 
-        return this.definitionResolver.resolve(match.value);
+        return this.definitionResolver.resolve(match);
     }
 }
