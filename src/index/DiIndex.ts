@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { XmlScanner, XmlNode } from "../parser/XmlScanner";
+import {PreferenceEntry, PreferenceIndex} from "./di/PreferenceIndex";
 
 export type DiKind =
     | "type"
@@ -20,11 +21,6 @@ interface DiLocation
     uri: vscode.Uri;
     offset: number;
     length: number;
-}
-
-export interface PreferenceEntry extends DiLocation {
-    for: string;
-    type: string;
 }
 
 export interface VirtualTypeEntry extends DiLocation {
@@ -56,7 +52,7 @@ export class DiIndex {
     /**
      * Нові індекси.
      */
-    private readonly preferences = new Map<string, PreferenceEntry[]>();
+    private readonly preferences = new PreferenceIndex();
 
     private readonly virtualTypes = new Map<string, VirtualTypeEntry>();
 
@@ -103,7 +99,7 @@ export class DiIndex {
         }
 
         console.log(`DI entries: ${this.map.size}`);
-        console.log(`Preferences: ${this.preferences.size}`);
+        console.log(`Preferences: ${this.preferences.size()}`);
         console.log(`VirtualTypes: ${this.virtualTypes.size}`);
         console.log(`Types: ${this.types.size}`);
         console.log(`Plugin targets: ${this.plugins.size}`);
@@ -137,7 +133,7 @@ export class DiIndex {
      */
     public findPreferences(className: string): PreferenceEntry[]
     {
-        return this.preferences.get(className) ?? [];
+        return this.preferences.find(className);
     }
 
     public findVirtualType(name: string): VirtualTypeEntry | undefined {
@@ -184,15 +180,13 @@ export class DiIndex {
 
             if (forClass && typeClass) {
 
-                const list = this.preferences.get(forClass) ?? [];
-                list.push({
+                this.preferences.add({
                     for: forClass,
                     type: typeClass,
                     uri: node.uri,
                     offset: node.offset,
                     length: node.length
                 });
-                this.preferences.set(forClass, list);
 
                 className = forClass;
 
