@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { XmlScanner, XmlNode } from "../parser/XmlScanner";
+import { XmlNode } from "../parser/XmlScanner";
 import { PreferenceEntry, PreferenceIndex } from "./di/PreferenceIndex";
 import { PluginEntry, PluginIndex } from "./di/PluginIndex";
 import { VirtualTypeEntry, VirtualTypeIndex } from "./di/VirtualTypeIndex";
@@ -32,8 +32,10 @@ export interface TypeEntry {
     length: number;
 }
 
+/**
+ * Сховищем даних
+ */
 export class DiIndex {
-
     /**
      * Старий індекс.
      * Не видаляємо поки, щоб нічого не зламати.
@@ -50,51 +52,6 @@ export class DiIndex {
     private readonly plugins = new PluginIndex();
 
     private readonly types = new Map<string, TypeEntry>();
-
-    private readonly scanner = new XmlScanner();
-
-    public async build(): Promise<void> {
-
-        this.map.clear();
-
-        this.preferences.clear();
-
-        this.virtualTypes.clear();
-
-        this.plugins.clear();
-
-        this.types.clear();
-
-        const files = await vscode.workspace.findFiles("**/etc/**/di.xml");
-
-        console.log(`Scanning ${files.length} di.xml files`);
-
-        for (const file of files) {
-
-            const doc = await vscode.workspace.openTextDocument(file);
-
-            const nodes = this.scanner.scan(
-                doc.getText(),
-                file,
-                [
-                    "type",
-                    "preference",
-                    "virtualType",
-                    "plugin"
-                ]
-            );
-
-            for (const node of nodes) {
-                this.consume(node);
-            }
-        }
-
-        console.log(`DI entries: ${this.map.size}`);
-        console.log(`Preferences: ${this.preferences.size()}`);
-        console.log(`VirtualTypes: ${this.virtualTypes.size()}`);
-        console.log(`Types: ${this.types.size}`);
-        console.log(`Plugin targets: ${this.plugins.size()}`);
-    }
 
     /**
      * Старий API.
@@ -138,7 +95,7 @@ export class DiIndex {
         return this.types.get(name);
     }
 
-    private consume(node: XmlNode) {
+    public consume(node: XmlNode) {
 
         let className: string | undefined;
 
@@ -246,5 +203,21 @@ export class DiIndex {
         });
 
         this.map.set(className, list);
+    }
+
+    public clear(): void {
+        this.map.clear();
+        this.preferences.clear();
+        this.virtualTypes.clear();
+        this.plugins.clear();
+        this.types.clear();
+    }
+
+    public logSize(): void {
+        console.log(`DI entries: ${this.map.size}`);
+        console.log(`Preferences: ${this.preferences.size()}`);
+        console.log(`VirtualTypes: ${this.virtualTypes.size()}`);
+        console.log(`Types: ${this.types.size}`);
+        console.log(`Plugin targets: ${this.plugins.size()}`);
     }
 }
