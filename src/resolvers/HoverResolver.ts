@@ -14,83 +14,111 @@ export class HoverResolver
         value: string
     ): vscode.Hover | undefined
     {
+        //
+        // PHP type
+        //
         const type = this.registry.find(value);
 
-        if (!type) {
-            return;
-        }
+        if (type) {
 
-        const md = new vscode.MarkdownString();
+            const md = new vscode.MarkdownString();
 
-        md.appendCodeblock(type.fqcn, "php");
-        md.appendMarkdown("\n\n");
-
-        switch (type.kind) {
-
-            case PhpTypeKind.Class:
-                md.appendMarkdown("**PHP Class**");
-                break;
-
-            case PhpTypeKind.Interface:
-                md.appendMarkdown("**PHP Interface**");
-                break;
-
-            case PhpTypeKind.Trait:
-                md.appendMarkdown("**PHP Trait**");
-                break;
-
-            case PhpTypeKind.Enum:
-                md.appendMarkdown("**PHP Enum**");
-                break;
-
-        }
-
-        if (type.extends) {
-
+            md.appendCodeblock(type.fqcn, "php");
             md.appendMarkdown("\n\n");
 
-            md.appendMarkdown(
-                `**Extends:** \`${type.extends}\``
-            );
+            switch (type.kind) {
 
+                case PhpTypeKind.Class:
+                    md.appendMarkdown("**PHP Class**");
+                    break;
+
+                case PhpTypeKind.Interface:
+                    md.appendMarkdown("**PHP Interface**");
+                    break;
+
+                case PhpTypeKind.Trait:
+                    md.appendMarkdown("**PHP Trait**");
+                    break;
+
+                case PhpTypeKind.Enum:
+                    md.appendMarkdown("**PHP Enum**");
+                    break;
+
+            }
+
+            if (type.extends) {
+
+                md.appendMarkdown("\n\n");
+                md.appendMarkdown(
+                    `**Extends:** \`${type.extends}\``
+                );
+
+            }
+
+            if (type.implements.length > 0) {
+
+                md.appendMarkdown("\n\n");
+                md.appendMarkdown(
+                    `**Implements:** ${type.implements
+                        .map(i => `\`${i}\``)
+                        .join(", ")}`
+                );
+
+            }
+
+            const preferences =
+                this.diIndex.findPreferences(type.fqcn);
+
+            if (preferences.length > 0) {
+
+                md.appendMarkdown("\n\n");
+                md.appendMarkdown(
+                    `**Preferences:** ${preferences.length}`
+                );
+
+            }
+
+            const plugins =
+                this.diIndex.findPlugins(type.fqcn);
+
+            if (plugins.length > 0) {
+
+                md.appendMarkdown("\n\n");
+                md.appendMarkdown(
+                    `**Plugins:** ${plugins.length}`
+                );
+
+            }
+
+            return new vscode.Hover(md);
         }
 
-        if (type.implements.length > 0) {
+        //
+        // Magento Virtual Type
+        //
+        const virtualType =
+            this.diIndex.findVirtualType(value);
+
+        if (virtualType) {
+
+            const md = new vscode.MarkdownString();
+
+            md.appendCodeblock(
+                virtualType.name,
+                "xml"
+            );
 
             md.appendMarkdown("\n\n");
-
-            md.appendMarkdown(
-                `**Implements:** ${type.implements
-                    .map(i => `\`${i}\``)
-                    .join(", ")}`
-            );
-
-        }
-
-        const preferences = this.diIndex.findPreferences(type.fqcn);
-
-        if (preferences.length > 0) {
+            md.appendMarkdown("**Magento Virtual Type**");
 
             md.appendMarkdown("\n\n");
-
             md.appendMarkdown(
-                `**Preferences:** ${preferences.length}`
+                `**Type:** \`${virtualType.type}\``
             );
 
+            return new vscode.Hover(md);
         }
 
-        const plugins = this.diIndex.findPlugins(type.fqcn);
-
-        if (plugins.length > 0) {
-
-            md.appendMarkdown("\n\n");
-
-            md.appendMarkdown(
-                `**Plugins:** ${plugins.length}`
-            );
-
-        }
-
-        return new vscode.Hover(md);
+        return;
     }
 }
