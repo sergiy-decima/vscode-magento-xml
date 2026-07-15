@@ -64,7 +64,10 @@ export class DiIndex {
         return this.plugins.find(type);
     }
 
-    public findType(name: string): TypeEntry | undefined {
+    public findTypes(
+        name: string
+    ): TypeEntry[]
+    {
         return this.types.find(name);
     }
 

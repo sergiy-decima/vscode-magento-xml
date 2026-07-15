@@ -9,7 +9,7 @@ export interface TypeEntry {
 
 export class TypeIndex
 {
-    private readonly map = new Map<string, TypeEntry>();
+    private readonly map = new Map<string, TypeEntry[]>();
 
     public clear(): void
     {
@@ -20,14 +20,28 @@ export class TypeIndex
         entry: TypeEntry
     ): void
     {
-        this.map.set(entry.name, entry);
+        let list = this.map.get(entry.name);
+
+        if (!list) {
+            list = [];
+            this.map.set(entry.name, list);
+        }
+
+        list.push(entry);
     }
 
     public find(
         name: string
-    ): TypeEntry | undefined
+    ): TypeEntry[]
     {
-        return this.map.get(name);
+        return this.map.get(name) ?? [];
+    }
+
+    public findAll(
+        name: string
+    ): TypeEntry[]
+    {
+        return this.find(name);
     }
 
     public has(
@@ -42,8 +56,10 @@ export class TypeIndex
         return this.map.size;
     }
 
-    public values(): IterableIterator<TypeEntry>
+    public *values(): IterableIterator<TypeEntry>
     {
-        return this.map.values();
+        for (const list of this.map.values()) {
+            yield* list;
+        }
     }
 }

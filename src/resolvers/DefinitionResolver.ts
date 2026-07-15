@@ -7,6 +7,7 @@ import { PhpClassDefinitionStrategy } from "./definition/PhpClassDefinitionStrat
 import { VirtualTypeDefinitionStrategy } from "./definition/VirtualTypeDefinitionStrategy";
 import { PreferenceDefinitionStrategy } from "./definition/PreferenceDefinitionStrategy";
 import { PluginDefinitionStrategy } from "./definition/PluginDefinitionStrategy";
+import { ObserverDefinitionStrategy } from "./definition/ObserverDefinitionStrategy";
 
 export class DefinitionResolver
 {
@@ -30,6 +31,10 @@ export class DefinitionResolver
                 diIndex
             ),
             new PluginDefinitionStrategy(
+                registry,
+                diIndex
+            ),
+            new ObserverDefinitionStrategy(
                 registry,
                 diIndex
             )

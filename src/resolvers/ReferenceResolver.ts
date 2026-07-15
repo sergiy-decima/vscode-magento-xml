@@ -13,16 +13,57 @@ export class ReferenceResolver
     {
         const result: vscode.Location[] = [];
 
-        for (const reference of this.diIndex.find(className)) {
+        result.push(
+            ...await this.toLocations(
+                this.diIndex.findPreferences(className)
+            )
+        );
+
+        result.push(
+            ...await this.toLocations(
+                this.diIndex.findPlugins(className)
+            )
+        );
+
+        const virtualType =
+            this.diIndex.findVirtualType(className);
+
+        if (virtualType) {
+
+            result.push(
+                ...await this.toLocations([virtualType])
+            );
+
+        }
+
+        result.push(
+            ...await this.toLocations(
+                this.diIndex.findTypes(className)
+            )
+        );
+
+        return result;
+    }
+
+    private async toLocations(
+        entries: Iterable<{
+            uri: vscode.Uri;
+            offset: number;
+        }>
+    ): Promise<vscode.Location[]>
+    {
+        const result: vscode.Location[] = [];
+
+        for (const entry of entries) {
 
             const doc = await vscode.workspace.openTextDocument(
-                reference.uri
+                entry.uri
             );
 
             result.push(
                 new vscode.Location(
-                    reference.uri,
-                    doc.positionAt(reference.offset)
+                    entry.uri,
+                    doc.positionAt(entry.offset)
                 )
             );
         }

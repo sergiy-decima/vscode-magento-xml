@@ -26,6 +26,7 @@ import { XmlReferenceProvider } from "./providers/XmlReferenceProvider";
 import { DiBuilder } from "./index/DiBuilder";
 import { EventsIndex } from "./index/EventsIndex";
 import { EventsBuilder } from "./index/EventsBuilder";
+import { PhpReferenceProvider } from "./providers/PhpReferenceProvider";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -131,6 +132,15 @@ export async function activate(
         vscode.languages.registerReferenceProvider(
             {scheme: "file", language: "xml"},
             new XmlReferenceProvider(referenceResolver)
+        )
+    );
+
+    // 🔥 8. PHP: Якщо курсор стоїть на класі, і викликати 'Find All References' (Shift + F12), 
+    // ти побачиш усі місця з di.xml, які зараз індексуються цим класом:
+    context.subscriptions.push(
+        vscode.languages.registerReferenceProvider(
+            { scheme: "file", language: "php" },
+            new PhpReferenceProvider(registry, cache, referenceResolver)
         )
     );
 }
