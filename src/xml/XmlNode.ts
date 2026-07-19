@@ -9,6 +9,8 @@ export class XmlNode
 
     public readonly children: XmlNode[] = [];
 
+    public parent?: XmlNode;
+
     constructor(
         public readonly name: string,
         public readonly uri: vscode.Uri,
@@ -44,6 +46,8 @@ export class XmlNode
         child: XmlNode
     ): void
     {
+        child.parent = this;
+
         this.children.push(child);
 
         let list = this.childMap.get(child.name);
@@ -68,5 +72,23 @@ export class XmlNode
     ): XmlNode[]
     {
         return this.childMap.get(name) ?? [];
+    }
+
+    public parentOf(
+        name: string
+    ): XmlNode | undefined
+    {
+        let node = this.parent;
+
+        while (node) {
+
+            if (node.name === name) {
+                return node;
+            }
+
+            node = node.parent;
+        }
+
+        return;
     }
 }

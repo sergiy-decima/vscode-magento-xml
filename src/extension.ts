@@ -27,6 +27,8 @@ import { DiBuilder } from "./index/DiBuilder";
 import { EventsIndex } from "./index/EventsIndex";
 import { EventsBuilder } from "./index/EventsBuilder";
 import { PhpReferenceProvider } from "./providers/PhpReferenceProvider";
+import { ImplementationResolver } from "./resolvers/ImplementationResolver";
+import { PhpImplementationProvider } from "./providers/PhpImplementationProvider";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -69,6 +71,8 @@ export async function activate(
         new PluginTypeCompletionStrategy(registry, completionFactory),
         new TypeNameCompletionStrategy(registry, completionFactory),
     ]);
+
+    const implementationResolver = new ImplementationResolver(registry);
 
     // 🔥 2. Definition provider (Ctrl+Click)
     context.subscriptions.push(
@@ -141,6 +145,13 @@ export async function activate(
         vscode.languages.registerReferenceProvider(
             { scheme: "file", language: "php" },
             new PhpReferenceProvider(registry, cache, referenceResolver)
+        )
+    );
+
+    context.subscriptions.push(
+        vscode.languages.registerImplementationProvider(
+            { scheme: "file", language: "php" },
+            new PhpImplementationProvider(registry, cache, documents, implementationResolver)
         )
     );
 }

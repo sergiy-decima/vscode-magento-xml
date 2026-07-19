@@ -206,4 +206,54 @@ export class TypeRegistry
 
         return result;
     }
+
+    public findImplementations(
+        fqcn: string
+    ): TypeEntry[]
+    {
+        const result: TypeEntry[] = [];
+        const visited = new Set<string>();
+
+        this.collectImplementations(
+            fqcn,
+            result,
+            visited
+        );
+
+        return result;
+    }
+
+    private collectImplementations(
+        fqcn: string,
+        result: TypeEntry[],
+        visited: Set<string>
+    ): void
+    {
+        if (visited.has(fqcn)) {
+            return;
+        }
+
+        visited.add(fqcn);
+
+        for (const entry of this.map.values()) {
+
+            if (
+                entry.extends !== fqcn &&
+                !entry.implements.includes(fqcn)
+            ) {
+                continue;
+            }
+
+            result.push(entry);
+
+            //
+            // Find subclasses / derived implementations
+            //
+            this.collectImplementations(
+                entry.fqcn,
+                result,
+                visited
+            );
+        }
+    }
 }

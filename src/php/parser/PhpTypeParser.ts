@@ -5,6 +5,7 @@ import { PhpReferenceList } from "./PhpReferenceList";
 import { PhpClassBodyParser } from "./PhpClassBodyParser";
 import { PhpParserBase } from "./PhpParserBase";
 import { PhpTokenStream } from "./PhpTokenStream";
+import { PhpImport } from "../ast/PhpImport";
 
 /**
  * Parses PHP type declarations:
@@ -47,12 +48,20 @@ export class PhpTypeParser extends PhpParserBase {
      * 
      * Returns undefined if current token is not a type keyword.
      */
-    public parseType(namespace: string): PhpType | undefined {
+    public parseType(
+        namespace: string,
+        imports: readonly PhpImport[]
+    ): PhpType | undefined
+    {
         if (!this.isTypeKeyword()) {
             return undefined;
         }
 
-        return this.readPhpType(namespace, this.tokenType());
+        return this.readPhpType(
+            namespace,
+            imports,
+            this.tokenType()
+        );
     }
 
     /**
@@ -60,15 +69,27 @@ export class PhpTypeParser extends PhpParserBase {
      *
      * class Foo extends Bar implements Baz
      */
-    private readPhpType(namespace: string, keyword: TokenType): PhpType | undefined {
+    private readPhpType(
+        namespace: string,
+        imports: readonly PhpImport[],
+        keyword: TokenType
+    ): PhpType | undefined
+    {
         this.next();
+
         if (this.tokenType() !== TokenType.Identifier) {
             return undefined;
         }
 
         const nameToken = this.token();
+
         const shortName = nameToken.text;
-        const fqcn = namespace ? `${namespace}\\${shortName}` : shortName;
+
+        const fqcn =
+            namespace
+                ? `${namespace}\\${shortName}`
+                : shortName;
+
         const type: PhpType = {
             fqcn,
             namespace,
@@ -84,7 +105,13 @@ export class PhpTypeParser extends PhpParserBase {
         };
 
         this.next();
-        this.readTypeHeader(type);
+
+        this.readTypeHeader(
+            type,
+            namespace,
+            imports
+        );
+
         this.bodyParser.parse(type);
 
         return type;
@@ -96,25 +123,46 @@ export class PhpTypeParser extends PhpParserBase {
      * extends Foo
      * implements A, B
      */
-    private readTypeHeader(type: PhpType): void {
+    private readTypeHeader(
+        type: PhpType,
+        namespace: string,
+        imports: readonly PhpImport[]
+    ): void
+    {
         while (!this.eof()) {
+
             if (this.match(TokenType.Extends)) {
-                type.extends = this.readQualifiedName();
+
+                const name = this.readQualifiedName();
+
+                if (name) {
+                    type.extends = this.resolveType(
+                        name,
+                        namespace,
+                        imports
+                    );
+                }
+
                 continue;
             }
 
             if (this.match(TokenType.Implements)) {
-                type.implements = this.readNameList();
+
+                type.implements = this.readNameList().map(
+                    name => this.resolveType(
+                        name,
+                        namespace,
+                        imports
+                    )
+                );
+
                 continue;
             }
 
             if (this.match(TokenType.OpenBrace)) {
-                /*
-                 * Body parser expects to start
-                 * inside the body.
-                 */
                 return;
             }
+
             this.next();
         }
     }
@@ -133,5 +181,42 @@ export class PhpTypeParser extends PhpParserBase {
             default:
                 return PhpTypeKind.Class;
         }
+    }
+
+    private resolveType(
+        name: string,
+        namespace: string,
+        imports: readonly PhpImport[]
+    ): string
+    {
+        //
+        // Fully-qualified
+        //
+        if (name.startsWith("\\")) {
+            return name.substring(1);
+        }
+
+        //
+        // Imported alias
+        //
+        for (const useImport of imports) {
+
+            if (useImport.alias === name) {
+                return useImport.fqcn;
+            }
+
+        }
+
+        //
+        // Already qualified inside current namespace
+        //
+        if (name.includes("\\")) {
+            return `${namespace}\\${name}`;
+        }
+
+        //
+        // Same namespace
+        //
+        return `${namespace}\\${name}`;
     }
 }

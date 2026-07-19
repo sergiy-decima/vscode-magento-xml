@@ -14,8 +14,8 @@ export class DefinitionResolver
     private readonly strategies: IDefinitionStrategy[];
 
     constructor(
-        registry: TypeRegistry,
-        diIndex: DiIndex
+        private registry: TypeRegistry,
+        private diIndex: DiIndex
     ) {
         this.strategies = [
             new PhpClassDefinitionStrategy(

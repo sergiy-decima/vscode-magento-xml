@@ -53,6 +53,15 @@ export class TypeBuilder {
         const stream =new PhpTokenStream(lexer);
         const parser = new PhpFileParser(stream);
         const phpFile = parser.parse();
+
+        for (const type of phpFile.types) {
+            if ('Magento\\Framework\\App\\Request\\Http' == type.fqcn) {
+            console.log("TYPE:", type.fqcn);
+            console.log("EXTENDS:", type.extends);
+            console.log("IMPLEMENTS:", type.implements);
+            }
+        }
+
         this.fileCache.set(document.file, phpFile);
         for (const phpType of phpFile.types) {
             this.registry.add( this.factory.create(document.file, phpType) );

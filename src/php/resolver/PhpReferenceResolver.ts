@@ -3,6 +3,7 @@ import { TypeEntry } from "../../index/TypeEntry";
 import { TypeRegistry } from "../../index/TypeRegistry";
 
 /**
+ * визначає, який PHP-тип під курсором.
  * Resolves PHP type references to indexed types.
  */
 export class PhpReferenceResolver {
