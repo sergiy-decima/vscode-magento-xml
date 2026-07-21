@@ -33,6 +33,7 @@ import { PhpConstructorResolver } from "./php/resolver/PhpConstructorResolver";
 import { PhpMethodResolver } from "./php/resolver/PhpMethodResolver";
 import { XmlFileCache } from "./xml/cache/XmlFileCache";
 import { ArgumentNameCompletionStrategy } from "./completion/ArgumentNameCompletionStrategy";
+import { ArgumentObjectCompletionStrategy } from "./completion/ArgumentObjectCompletionStrategy";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -81,7 +82,8 @@ export async function activate(
         new VirtualTypeTypeCompletionStrategy(registry, completionFactory),
         new PluginTypeCompletionStrategy(registry, completionFactory),
         new TypeNameCompletionStrategy(registry, completionFactory),
-        new ArgumentNameCompletionStrategy(methodResolver)
+        new ArgumentNameCompletionStrategy(methodResolver),
+        new ArgumentObjectCompletionStrategy(registry, completionFactory)
     ]);
 
     const implementationResolver = new ImplementationResolver(registry);

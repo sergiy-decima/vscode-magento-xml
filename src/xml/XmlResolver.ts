@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+
 import { XmlAttribute } from "./ast/XmlAttribute";
 import { XmlDocument } from "./ast/XmlDocument";
 import { XmlNode } from "./ast/XmlNode";
@@ -9,6 +10,11 @@ export interface XmlResolveResult
 
     attribute?: XmlAttribute;
 
+    /**
+     * Cursor is inside node text.
+     */
+    inText: boolean;
+
     ownerType?: XmlNode;
 
     ownerVirtualType?: XmlNode;
@@ -16,8 +22,6 @@ export interface XmlResolveResult
     ownerPreference?: XmlNode;
 
     ownerPlugin?: XmlNode;
-
-    range?: vscode.Range;
 }
 
 export class XmlResolver
@@ -30,7 +34,9 @@ export class XmlResolver
         const node = document.findNode(offset);
 
         if (!node) {
-            return {};
+            return {
+                inText: false
+            };
         }
 
         let attribute: XmlAttribute | undefined;
@@ -49,18 +55,11 @@ export class XmlResolver
         return {
             node,
             attribute,
-            ownerType: this.closest(node, "type"),
-            ownerVirtualType: this.closest(node, "virtualType"),
-            ownerPreference: this.closest(node, "preference"),
-            ownerPlugin: this.closest(node, "plugin")
+            inText: node.containsText(offset),
+            ownerType: node.closest("type"),
+            ownerVirtualType: node.closest("virtualType"),
+            ownerPreference: node.closest("preference"),
+            ownerPlugin: node.closest("plugin")
         };
-    }
-
-    private closest(
-        node: XmlNode,
-        name: string
-    ): XmlNode | undefined
-    {
-        return node.closest(name);
     }
 }

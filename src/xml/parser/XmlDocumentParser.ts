@@ -71,7 +71,6 @@ export class XmlDocumentParser
                 this.tokenType() ===
                 XmlTokenType.Identifier
             ) {
-
                 attributes.push(
                     this.readAttribute()
                 );
@@ -90,7 +89,7 @@ export class XmlDocumentParser
             attributes
         );
 
-                //
+        //
         // <tag />
         //
         if (
@@ -98,13 +97,11 @@ export class XmlDocumentParser
                 XmlTokenType.SelfCloseTag
             )
         ) {
-            return new XmlNode(
-                tag.text,
-                this.root.uri,
-                tag.offset,
-                this.token().offset - tag.offset,
-                attributes
-            );
+            node.length =
+                this.token().offset -
+                tag.offset;
+
+            return node;
         }
 
         //
@@ -127,14 +124,25 @@ export class XmlDocumentParser
                 this.tokenType() ===
                 XmlTokenType.Text
             ) {
+                node.text =
+                    this.token().text;
+
+                node.textOffset =
+                    this.token().offset;
+
+                node.textLength =
+                    this.token().length;
+
                 this.next();
+
                 continue;
             }
 
             //
             // child
             //
-            const child = this.readElement();
+            const child =
+                this.readElement();
 
             if (child) {
                 node.addChild(child);
@@ -181,7 +189,8 @@ export class XmlDocumentParser
             this.next();
         }
 
-        node.length = end - tag.offset;
+        node.length =
+            end - tag.offset;
 
         return node;
     }

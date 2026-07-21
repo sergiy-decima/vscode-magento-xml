@@ -29,20 +29,23 @@ export abstract class AbstractPhpTypeCompletionStrategy
         xml: XmlResolveResult
     ): vscode.CompletionItem[]
     {
-        if (!xml.attribute) {
-            return [];
+        let search = "";
+
+        if (xml.attribute) {
+            search = xml.attribute.value;
+        } else if (xml.inText) {
+            search = xml.node?.text.trim() ?? "";
         }
 
         return this.registry
-            .search(
-                xml.attribute.value,
-                this.phpKinds
-            )
-            .map(type => this.createCompletionItem(
-                document,
-                xml,
-                type
-            ));
+            .search(search, this.phpKinds)
+            .map(type =>
+                this.createCompletionItem(
+                    document,
+                    xml,
+                    type
+                )
+            );
     }
 
     protected createCompletionItem(

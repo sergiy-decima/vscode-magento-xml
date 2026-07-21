@@ -11,6 +11,21 @@ export class XmlNode
 
     public parent?: XmlNode;
 
+    /**
+     * Text between opening and closing tag.
+     */
+    public text = "";
+
+    /**
+     * Offset of text.
+     */
+    public textOffset = 0;
+
+    /**
+     * Length of text.
+     */
+    public textLength = 0;
+
     constructor(
         public readonly name: string,
         public readonly uri: vscode.Uri,
@@ -19,7 +34,10 @@ export class XmlNode
         attributes: XmlAttribute[]
     ) {
         for (const attribute of attributes) {
-            this.attributeMap.set(attribute.name, attribute);
+            this.attributeMap.set(
+                attribute.name,
+                attribute
+            );
         }
     }
 
@@ -31,11 +49,15 @@ export class XmlNode
 
         this.children.push(child);
 
-        let list = this.childMap.get(child.name);
+        let list =
+            this.childMap.get(child.name);
 
         if (!list) {
             list = [];
-            this.childMap.set(child.name, list);
+            this.childMap.set(
+                child.name,
+                list
+            );
         }
 
         list.push(child);
@@ -95,6 +117,17 @@ export class XmlNode
         );
     }
 
+    public containsText(
+        offset: number
+    ): boolean
+    {
+        return (
+            this.textLength > 0 &&
+            offset >= this.textOffset &&
+            offset <= this.textOffset + this.textLength
+        );
+    }
+
     public findNode(
         offset: number
     ): XmlNode | undefined
@@ -105,7 +138,8 @@ export class XmlNode
 
         for (const child of this.children) {
 
-            const found = child.findNode(offset);
+            const found =
+                child.findNode(offset);
 
             if (found) {
                 return found;

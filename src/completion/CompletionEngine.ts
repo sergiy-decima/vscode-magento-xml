@@ -24,16 +24,21 @@ export class CompletionEngine
         xml: XmlResolveResult
     ): vscode.CompletionItem[]
     {
-        if (
-            !xml.node ||
-            !xml.attribute
-        ) {
+        if (!xml.node) {
             return [];
         }
 
-        const strategy = this.strategies.get(
-            `${xml.node.name}:${xml.attribute.name}`
-        );
+        let key: string;
+
+        if (xml.attribute) {
+            key = `${xml.node.name}:${xml.attribute.name}`;
+        } else if (xml.inText) {
+            key = `${xml.node.name}:value`;
+        } else {
+            return [];
+        }
+
+        const strategy = this.strategies.get(key);
 
         if (!strategy) {
             return [];
