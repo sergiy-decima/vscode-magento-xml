@@ -30,6 +30,7 @@ import { PhpReferenceProvider } from "./providers/PhpReferenceProvider";
 import { ImplementationResolver } from "./resolvers/ImplementationResolver";
 import { PhpImplementationProvider } from "./providers/PhpImplementationProvider";
 import { PhpConstructorResolver } from "./php/resolver/PhpConstructorResolver";
+import { PhpMethodResolver } from "./php/resolver/PhpMethodResolver";
 import { XmlFileCache } from "./xml/cache/XmlFileCache";
 import { ArgumentNameCompletionStrategy } from "./completion/ArgumentNameCompletionStrategy";
 
@@ -69,6 +70,7 @@ export async function activate(
     console.log("Events index ready");
 
     const constructorResolver = new PhpConstructorResolver(registry, cache);
+    const methodResolver = new PhpMethodResolver(registry, cache);
     const definitionResolver = new DefinitionResolver(registry, diIndex, constructorResolver, documents);
     const hoverResolver = new HoverResolver(registry, diIndex);
     const referenceResolver = new ReferenceResolver(diIndex);
@@ -79,7 +81,7 @@ export async function activate(
         new VirtualTypeTypeCompletionStrategy(registry, completionFactory),
         new PluginTypeCompletionStrategy(registry, completionFactory),
         new TypeNameCompletionStrategy(registry, completionFactory),
-        new ArgumentNameCompletionStrategy(constructorResolver)
+        new ArgumentNameCompletionStrategy(methodResolver)
     ]);
 
     const implementationResolver = new ImplementationResolver(registry);

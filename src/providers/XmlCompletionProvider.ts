@@ -32,6 +32,8 @@ export class XmlCompletionProvider
             document.offsetAt(position)
         );
 
+        // console.log(result);
+
         return this.engine.complete(
             document,
             position,
