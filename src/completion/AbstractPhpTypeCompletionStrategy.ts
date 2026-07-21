@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
+
 import { TypeRegistry } from "../index/TypeRegistry";
 import { TypeEntry } from "../index/TypeEntry";
 import { PhpTypeKind } from "../php/ast/PhpTypeKind";
-import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
+import { XmlResolveResult } from "../xml/XmlResolver";
 import { ICompletionStrategy } from "./ICompletionStrategy";
 import { CompletionItemFactory } from "./CompletionItemFactory";
 
@@ -25,21 +26,34 @@ export abstract class AbstractPhpTypeCompletionStrategy
     public complete(
         document: vscode.TextDocument,
         position: vscode.Position,
-        match: XmlAttributeMatch
+        xml: XmlResolveResult
     ): vscode.CompletionItem[]
     {
+        if (!xml.attribute) {
+            return [];
+        }
+
         return this.registry
-            .search(match.value, this.phpKinds)
-            .map(type => this.createCompletionItem(match, type));
+            .search(
+                xml.attribute.value,
+                this.phpKinds
+            )
+            .map(type => this.createCompletionItem(
+                document,
+                xml,
+                type
+            ));
     }
 
     protected createCompletionItem(
-        match: XmlAttributeMatch,
+        document: vscode.TextDocument,
+        xml: XmlResolveResult,
         type: TypeEntry
     ): vscode.CompletionItem
     {
         return this.factory.createPhpType(
-            match,
+            document,
+            xml,
             type,
             this.completionKind,
             this.detail

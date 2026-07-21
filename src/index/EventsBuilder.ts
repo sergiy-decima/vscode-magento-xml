@@ -1,14 +1,23 @@
 import * as vscode from "vscode";
+
 import { EventsIndex } from "./EventsIndex";
-import { XmlScanner } from "../parser/XmlScanner";
-import { XmlNode } from "../xml/XmlNode";
+
+import { XmlDocumentReader } from "../xml/XmlDocumentReader";
+import { XmlFileCache } from "../xml/cache/XmlFileCache";
+
+import { XmlLexer } from "../xml/lexer/XmlLexer";
+import { XmlTokenStream } from "../xml/parser/XmlTokenStream";
+import { XmlDocumentParser } from "../xml/parser/XmlDocumentParser";
+
+import { XmlNode } from "../xml/ast/XmlNode";
 
 export class EventsBuilder
 {
-    private readonly scanner = new XmlScanner();
+    private readonly reader = new XmlDocumentReader();
 
     constructor(
-        private readonly index: EventsIndex
+        private readonly index: EventsIndex,
+        private readonly cache: XmlFileCache
     ) {}
 
     public async build(): Promise<void>
@@ -21,38 +30,48 @@ export class EventsBuilder
 
         for (const file of files) {
 
-            const document = await vscode.workspace.openTextDocument(file);
-
-            const nodes = this.scanner.scan(
-                document.getText(),
-                file,
-                [
-                    "event",
-                    "observer"
-                ]
+            const xml = await this.reader.read(
+                file.fsPath
             );
 
-            this.consume(nodes);
+            const lexer = new XmlLexer(xml);
+
+            const stream = new XmlTokenStream(
+                lexer
+            );
+
+            const parser = new XmlDocumentParser(
+                stream,
+                file
+            );
+
+            const document = parser.parse();
+
+            this.cache.set(
+                file.fsPath,
+                document
+            );
+
+            this.walk(
+                document.root,
+                undefined
+            );
         }
 
         this.index.logSize();
     }
 
-    private consume(
-        nodes: XmlNode[]
+    private walk(
+        node: XmlNode,
+        currentEvent?: string
     ): void
     {
-        let currentEvent: string | undefined;
+        if (node.name === "event") {
 
-        for (const node of nodes) {
+            const name =
+                node.attribute("name")?.value;
 
-            if (node.name === "event") {
-
-                const name = node.attribute("name")?.value;
-
-                if (!name) {
-                    continue;
-                }
+            if (name) {
 
                 currentEvent = name;
 
@@ -62,24 +81,24 @@ export class EventsBuilder
                     offset: node.offset,
                     length: node.length
                 });
-
-                continue;
             }
+        }
+
+        if (
+            node.name === "observer" &&
+            currentEvent
+        ) {
+
+            const observerName =
+                node.attribute("name")?.value;
+
+            const instance =
+                node.attribute("instance")?.value;
 
             if (
-                node.name === "observer" &&
-                currentEvent
+                observerName &&
+                instance
             ) {
-
-                const observerName =
-                    node.attribute("name")?.value;
-
-                const instance =
-                    node.attribute("instance")?.value;
-
-                if (!observerName || !instance) {
-                    continue;
-                }
 
                 this.index.addObserver({
                     event: currentEvent,
@@ -90,6 +109,13 @@ export class EventsBuilder
                     length: node.length
                 });
             }
+        }
+
+        for (const child of node.children) {
+            this.walk(
+                child,
+                currentEvent
+            );
         }
     }
 }

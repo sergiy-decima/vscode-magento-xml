@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
+
+import { XmlResolveResult } from "../xml/XmlResolver";
 
 export interface ICompletionStrategy
 {
@@ -8,12 +9,13 @@ export interface ICompletionStrategy
      * preference:for
      * preference:type
      * plugin:type
+     * argument:name
      */
     readonly key: string;
 
     complete(
         document: vscode.TextDocument,
         position: vscode.Position,
-        match: XmlAttributeMatch
+        xml: XmlResolveResult
     ): vscode.CompletionItem[];
 }

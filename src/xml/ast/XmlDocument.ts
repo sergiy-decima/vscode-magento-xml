@@ -19,4 +19,11 @@ export class XmlDocument
     {
         return this.root.childrenOf(name);
     }
+
+    public findNode(
+        offset: number
+    ): XmlNode | undefined
+    {
+        return this.root.findNode(offset);
+    }
 }

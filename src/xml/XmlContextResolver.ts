@@ -2,8 +2,7 @@ import * as vscode from "vscode";
 
 export interface XmlContext
 {
-    type?: string;
-    virtualType?: string;
+    ownerType?: string;
 }
 
 export class XmlContextResolver
@@ -26,17 +25,17 @@ export class XmlContextResolver
         let match: RegExpExecArray | null;
 
         while ((match = typeRegex.exec(text)) !== null) {
-            result.type = match[1];
+            result.ownerType = match[1];
         }
 
         //
-        // nearest <virtualType name="...">
+        // nearest <virtualType type="...">
         //
         const virtualRegex =
-            /<virtualType\s+[^>]*name="([^"]+)"/g;
+            /<virtualType\s+[^>]*type="([^"]+)"/g;
 
         while ((match = virtualRegex.exec(text)) !== null) {
-            result.virtualType = match[1];
+            result.ownerType = match[1];
         }
 
         return result;

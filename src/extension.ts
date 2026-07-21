@@ -29,14 +29,17 @@ import { EventsBuilder } from "./index/EventsBuilder";
 import { PhpReferenceProvider } from "./providers/PhpReferenceProvider";
 import { ImplementationResolver } from "./resolvers/ImplementationResolver";
 import { PhpImplementationProvider } from "./providers/PhpImplementationProvider";
+import { PhpConstructorResolver } from "./php/resolver/PhpConstructorResolver";
+import { XmlFileCache } from "./xml/cache/XmlFileCache";
+import { ArgumentNameCompletionStrategy } from "./completion/ArgumentNameCompletionStrategy";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
 let builder = new TypeBuilder(registry, cache);
-let diIndex = new DiIndex();
-let diBuilder = new DiBuilder(diIndex);
+// let diIndex = new DiIndex();
+// let diBuilder = new DiBuilder(diIndex);
 let documents = new DocumentManager();
-let eventsIndex = new EventsIndex();
+// let eventsIndex = new EventsIndex();
 
 export async function activate(
     context: vscode.ExtensionContext
@@ -53,14 +56,20 @@ export async function activate(
     const watcher = new WorkspaceWatcher(builder, documents);
     context.subscriptions.push(watcher.start());
 
+    const xmlCache = new XmlFileCache();
+    const diIndex = new DiIndex();
+    const diBuilder = new DiBuilder(diIndex, xmlCache);
     await diBuilder.build();
     console.log("DI index ready");
 
-    const eventsBuilder = new EventsBuilder(eventsIndex);
+    // const eventsBuilder = new EventsBuilder(eventsIndex);
+    const eventsIndex = new EventsIndex();
+    const eventsBuilder = new EventsBuilder(eventsIndex, xmlCache);
     await eventsBuilder.build();
     console.log("Events index ready");
 
-    const definitionResolver = new DefinitionResolver(registry, diIndex);
+    const constructorResolver = new PhpConstructorResolver(registry, cache);
+    const definitionResolver = new DefinitionResolver(registry, diIndex, constructorResolver, documents);
     const hoverResolver = new HoverResolver(registry, diIndex);
     const referenceResolver = new ReferenceResolver(diIndex);
     const completionFactory = new CompletionItemFactory();
@@ -70,6 +79,7 @@ export async function activate(
         new VirtualTypeTypeCompletionStrategy(registry, completionFactory),
         new PluginTypeCompletionStrategy(registry, completionFactory),
         new TypeNameCompletionStrategy(registry, completionFactory),
+        new ArgumentNameCompletionStrategy(constructorResolver)
     ]);
 
     const implementationResolver = new ImplementationResolver(registry);
@@ -86,7 +96,7 @@ export async function activate(
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider(
             {scheme: "file", language: "xml"},
-            new XmlCompletionProvider(completionEngine),
+            new XmlCompletionProvider(xmlCache, completionEngine),
             "\\"
         )
     );

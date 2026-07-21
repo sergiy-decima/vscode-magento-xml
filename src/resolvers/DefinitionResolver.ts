@@ -8,14 +8,18 @@ import { VirtualTypeDefinitionStrategy } from "./definition/VirtualTypeDefinitio
 import { PreferenceDefinitionStrategy } from "./definition/PreferenceDefinitionStrategy";
 import { PluginDefinitionStrategy } from "./definition/PluginDefinitionStrategy";
 import { ObserverDefinitionStrategy } from "./definition/ObserverDefinitionStrategy";
+import { PhpConstructorResolver } from "../php/resolver/PhpConstructorResolver";
+import { DocumentManager } from "../vscode/DocumentManager";
 
 export class DefinitionResolver
 {
     private readonly strategies: IDefinitionStrategy[];
 
     constructor(
-        private registry: TypeRegistry,
-        private diIndex: DiIndex
+        private readonly registry: TypeRegistry,
+        private readonly diIndex: DiIndex,
+        private readonly constructorResolver: PhpConstructorResolver,
+        private readonly documents: DocumentManager
     ) {
         this.strategies = [
             new PhpClassDefinitionStrategy(
@@ -55,5 +59,34 @@ export class DefinitionResolver
         }
 
         return;
+    }
+
+    public async resolveArgument(
+        ownerClass: string,
+        parameterName: string
+    ): Promise<vscode.Location | undefined>
+    {
+        const parameter = this.constructorResolver.resolve(
+            ownerClass,
+            parameterName
+        );
+
+        if (!parameter) {
+            return;
+        }
+
+        const type = this.registry.find(ownerClass);
+
+        if (!type) {
+            return;
+        }
+
+        return new vscode.Location(
+            type.uri,
+            await this.documents.position(
+                type.uri,
+                parameter.offset
+            )
+        );
     }
 }

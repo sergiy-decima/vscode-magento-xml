@@ -1,63 +1,119 @@
 import * as vscode from "vscode";
-import { XmlScanner } from "../parser/XmlScanner";
+
 import { DiIndex } from "./DiIndex";
 import { DiKind } from "./di/DiReferenceIndex";
-import { XmlNode } from "../xml/XmlNode";
+
+import { XmlDocumentReader } from "../xml/XmlDocumentReader";
+import { XmlFileCache } from "../xml/cache/XmlFileCache";
+
+import { XmlLexer } from "../xml/lexer/XmlLexer";
+import { XmlTokenStream } from "../xml/parser/XmlTokenStream";
+import { XmlDocumentParser } from "../xml/parser/XmlDocumentParser";
+
+import { XmlNode } from "../xml/ast/XmlNode";
 
 export class DiBuilder
 {
-    private readonly scanner = new XmlScanner();
+    private readonly reader = new XmlDocumentReader();
 
     constructor(
-        private readonly index: DiIndex
+        private readonly index: DiIndex,
+        private readonly cache: XmlFileCache
     ) {}
 
     public async build(): Promise<void>
     {
         this.index.clear();
-        const files = await vscode.workspace.findFiles("**/etc/**/di.xml");
+        this.cache.clear();
 
-        console.log(`Scanning ${files.length} di.xml files`);
-
-        for (const file of files) {
-            const document = await vscode.workspace.openTextDocument(file);
-            const nodes = this.scanner.scan(
-                document.getText(),
-                file,
-                [
-                    "type",
-                    "preference",
-                    "virtualType",
-                    "plugin"
-                ]
+        const files =
+            await vscode.workspace.findFiles(
+                "**/etc/**/di.xml"
             );
 
-            for (const node of nodes) {
-                this.consume(node);
-            }
+        console.log(
+            `Scanning ${files.length} di.xml files`
+        );
 
+        for (const file of files) {
+
+            const xml =
+                await this.reader.read(file.fsPath);
+
+            const lexer =
+                new XmlLexer(xml);
+
+            const stream =
+                new XmlTokenStream(lexer);
+
+            const parser =
+                new XmlDocumentParser(
+                    stream,
+                    file
+                );
+
+            const document =
+                parser.parse();
+
+            this.cache.set(
+                file.fsPath,
+                document
+            );
+
+            this.walk(document.root);
         }
 
         const stats = this.index.stats();
-        console.log(`DI entries: ${stats.references}`);
-        console.log(`Preferences: ${stats.preferences}`);
-        console.log(`VirtualTypes: ${stats.virtualTypes}`);
-        console.log(`Types: ${stats.types}`);
-        console.log(`Plugin targets: ${stats.plugins}`);
+
+        console.log(
+            `DI entries: ${stats.references}`
+        );
+
+        console.log(
+            `Preferences: ${stats.preferences}`
+        );
+
+        console.log(
+            `VirtualTypes: ${stats.virtualTypes}`
+        );
+
+        console.log(
+            `Types: ${stats.types}`
+        );
+
+        console.log(
+            `Plugin targets: ${stats.plugins}`
+        );
     }
 
-    private consume(
+    private walk(
+        node: XmlNode
+    ): void
+    {
+        this.consume(node);
+
+        for (const child of node.children) {
+            this.walk(child);
+        }
+    }
+
+        private consume(
         node: XmlNode
     ): void
     {
         let className: string | undefined;
         let kind: DiKind = "type";
 
-        if (node.name === "type") {
+        switch (node.name) {
 
-            const name = node.attribute("name")?.value;
+            case "type": {
 
-            if (name) {
+                const name =
+                    node.attribute("name")?.value;
+
+                if (!name) {
+                    return;
+                }
 
                 this.index.addType({
                     name,
@@ -68,15 +124,24 @@ export class DiBuilder
 
                 className = name;
                 kind = "type";
+
+                break;
             }
-        }
 
-        if (node.name === "preference") {
+            case "preference": {
 
-            const forClass = node.attribute("for")?.value;
-            const typeClass = node.attribute("type")?.value;
+                const forClass =
+                    node.attribute("for")?.value;
 
-            if (forClass && typeClass) {
+                const typeClass =
+                    node.attribute("type")?.value;
+
+                if (
+                    !forClass ||
+                    !typeClass
+                ) {
+                    return;
+                }
 
                 this.index.addPreference({
                     for: forClass,
@@ -88,15 +153,24 @@ export class DiBuilder
 
                 className = forClass;
                 kind = "preference";
+
+                break;
             }
-        }
 
-        if (node.name === "virtualType") {
+            case "virtualType": {
 
-            const name = node.attribute("name")?.value;
-            const type = node.attribute("type")?.value;
+                const name =
+                    node.attribute("name")?.value;
 
-            if (name && type) {
+                const type =
+                    node.attribute("type")?.value;
+
+                if (
+                    !name ||
+                    !type
+                ) {
+                    return;
+                }
 
                 this.index.addVirtualType({
                     name,
@@ -108,15 +182,24 @@ export class DiBuilder
 
                 className = name;
                 kind = "virtualType";
+
+                break;
             }
-        }
 
-        if (node.name === "plugin") {
+            case "plugin": {
 
-            const target = node.attribute("type")?.value;
-            const plugin = node.attribute("name")?.value;
+                const target =
+                    node.attribute("type")?.value;
 
-            if (target && plugin) {
+                const plugin =
+                    node.attribute("name")?.value;
+
+                if (
+                    !target ||
+                    !plugin
+                ) {
+                    return;
+                }
 
                 this.index.addPlugin({
                     name: plugin,
@@ -129,11 +212,12 @@ export class DiBuilder
 
                 className = target;
                 kind = "plugin";
-            }
-        }
 
-        if (!className) {
-            return;
+                break;
+            }
+
+            default:
+                return;
         }
 
         this.index.addReference({

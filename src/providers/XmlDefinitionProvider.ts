@@ -9,7 +9,7 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
         private definitionResolver: DefinitionResolver
     ) {}
 
-    async provideDefinition(
+    public async provideDefinition(
         document: vscode.TextDocument,
         position: vscode.Position
     ): Promise<vscode.Definition | undefined>
@@ -19,27 +19,30 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
             position
         );
 
+        if (!match) {
+            return;
+        }
+
         const context = XmlContextResolver.resolve(
             document,
             document.offsetAt(position)
         );
 
-        console.log(context);
+        // <argument name="...">
+        if (
+            match.tag === "argument" &&
+            match.attribute === "name" &&
+            context?.ownerType
+        ) {
 
-        if (!match) {
-            return;
+            console.log("XML context:", context);
+            console.log("XML match:", match);
+
+            return this.definitionResolver.resolveArgument(
+                context.ownerType,
+                match.value
+            );
         }
-
-        // if (
-        //     match.tag === "argument" &&
-        //     match.attribute === "name" &&
-        //     match.ownerType
-        // ) {
-        //     return this.definitionResolver.resolveArgument(
-        //         match.ownerType,
-        //         match.value
-        //     );
-        // }
 
         return this.definitionResolver.resolve(match);
     }

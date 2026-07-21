@@ -1,27 +1,38 @@
 import * as vscode from "vscode";
-import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
+
+import { XmlResolveResult } from "../xml/XmlResolver";
 import { ICompletionStrategy } from "./ICompletionStrategy";
 
 export class CompletionEngine
 {
     private readonly strategies = new Map<string, ICompletionStrategy>();
 
-    constructor(
+    public constructor(
         strategies: ICompletionStrategy[]
     ) {
         for (const strategy of strategies) {
-            this.strategies.set(strategy.key, strategy);
+            this.strategies.set(
+                strategy.key,
+                strategy
+            );
         }
     }
 
     public complete(
         document: vscode.TextDocument,
         position: vscode.Position,
-        match: XmlAttributeMatch
+        xml: XmlResolveResult
     ): vscode.CompletionItem[]
     {
+        if (
+            !xml.node ||
+            !xml.attribute
+        ) {
+            return [];
+        }
+
         const strategy = this.strategies.get(
-            `${match.tag}:${match.attribute}`
+            `${xml.node.name}:${xml.attribute.name}`
         );
 
         if (!strategy) {
@@ -31,7 +42,7 @@ export class CompletionEngine
         return strategy.complete(
             document,
             position,
-            match
+            xml
         );
     }
 }

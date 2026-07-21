@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { XmlAttribute } from "../xml/XmlAttribute";
-import { XmlNode } from "../xml/XmlNode";
+import { XmlAttribute } from "../xml/ast/XmlAttribute";
+import { XmlNode } from "../xml/ast/XmlNode";
 
 export class XmlScanner 
 {

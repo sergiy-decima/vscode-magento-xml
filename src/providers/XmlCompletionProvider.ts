@@ -1,31 +1,41 @@
 import * as vscode from "vscode";
-import { CompletionEngine } from "../completion/CompletionEngine";
-import { XmlAttributeResolver } from "../xml/XmlAttributeResolver";
 
-export class XmlCompletionProvider implements vscode.CompletionItemProvider
+import { CompletionEngine } from "../completion/CompletionEngine";
+import { XmlFileCache } from "../xml/cache/XmlFileCache";
+import { XmlResolver } from "../xml/XmlResolver";
+
+export class XmlCompletionProvider
+    implements vscode.CompletionItemProvider
 {
+    private readonly resolver = new XmlResolver();
+
     constructor(
-        private engine: CompletionEngine
+        private readonly cache: XmlFileCache,
+        private readonly engine: CompletionEngine
     ) {}
 
-    provideCompletionItems(
+    public provideCompletionItems(
         document: vscode.TextDocument,
         position: vscode.Position
     ): vscode.CompletionItem[]
     {
-        const match = XmlAttributeResolver.resolve(
-            document,
-            position
+        const xml = this.cache.get(
+            document.fileName
         );
 
-        if (!match) {
+        if (!xml) {
             return [];
         }
+
+        const result = this.resolver.resolve(
+            xml,
+            document.offsetAt(position)
+        );
 
         return this.engine.complete(
             document,
             position,
-            match
+            result
         );
     }
 }

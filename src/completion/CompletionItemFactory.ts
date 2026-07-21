@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
 import { TypeEntry } from "../index/TypeEntry";
-import { XmlAttributeMatch } from "../xml/XmlAttributeResolver";
+import { XmlResolveResult } from "../xml/XmlResolver";
 
 export class CompletionItemFactory
 {
-    public createPhpType(
-        match: XmlAttributeMatch,
+    createPhpType(
+        document: vscode.TextDocument,
+        xml: XmlResolveResult,
         type: TypeEntry,
         kind: vscode.CompletionItemKind,
         detail: string
@@ -24,7 +25,13 @@ export class CompletionItemFactory
         item.documentation = `${type.namespace}\\${type.className}`;
 
         item.textEdit = new vscode.TextEdit(
-            match.range,
+            new vscode.Range(
+                document.positionAt(xml.attribute!.offset),
+                document.positionAt(
+                    xml.attribute!.offset +
+                    xml.attribute!.length
+                )
+            ),
             type.fqcn
         );
 

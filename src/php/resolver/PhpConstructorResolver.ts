@@ -12,7 +12,23 @@ export class PhpConstructorResolver
     public resolve(
         className: string,
         parameter: string
-    ): PhpParameter | undefined
+    )
+    {
+        const constructor =
+            this.resolveConstructor(className);
+
+        if (!constructor) {
+            return;
+        }
+
+        return constructor.parameters.find(
+            p => p.name === parameter
+        );
+    }
+
+    public resolveConstructor(
+        className: string
+    )
     {
         const type = this.registry.find(className);
 
@@ -34,16 +50,8 @@ export class PhpConstructorResolver
             return;
         }
 
-        const constructor = phpType.methods.find(
+        return phpType.methods.find(
             m => m.name === "__construct"
-        );
-
-        if (!constructor) {
-            return;
-        }
-
-        return constructor.parameters.find(
-            p => p.name === parameter
         );
     }
 }
