@@ -13,16 +13,17 @@ export class XmlNode
 
     /**
      * Text between opening and closing tag.
+     * Text between <tag> and </tag>.
      */
     public text = "";
 
     /**
-     * Offset of text.
+     * Offset of node text.
      */
     public textOffset = 0;
 
     /**
-     * Length of text.
+     * Length of node text.
      */
     public textLength = 0;
 
@@ -34,10 +35,7 @@ export class XmlNode
         attributes: XmlAttribute[]
     ) {
         for (const attribute of attributes) {
-            this.attributeMap.set(
-                attribute.name,
-                attribute
-            );
+            this.attributeMap.set(attribute.name, attribute);
         }
     }
 
@@ -49,15 +47,11 @@ export class XmlNode
 
         this.children.push(child);
 
-        let list =
-            this.childMap.get(child.name);
+        let list = this.childMap.get(child.name);
 
         if (!list) {
             list = [];
-            this.childMap.set(
-                child.name,
-                list
-            );
+            this.childMap.set(child.name, list);
         }
 
         list.push(child);
@@ -122,7 +116,6 @@ export class XmlNode
     ): boolean
     {
         return (
-            this.textLength > 0 &&
             offset >= this.textOffset &&
             offset <= this.textOffset + this.textLength
         );
@@ -138,8 +131,7 @@ export class XmlNode
 
         for (const child of this.children) {
 
-            const found =
-                child.findNode(offset);
+            const found = child.findNode(offset);
 
             if (found) {
                 return found;

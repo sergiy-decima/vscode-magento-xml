@@ -38,7 +38,9 @@ export class CompletionEngine
             return [];
         }
 
+        // console.log("Completion key:", key);
         const strategy = this.strategies.get(key);
+        // console.log("Strategy:", strategy?.constructor.name);
 
         if (!strategy) {
             return [];

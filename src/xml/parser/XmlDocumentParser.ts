@@ -124,17 +124,28 @@ export class XmlDocumentParser
                 this.tokenType() ===
                 XmlTokenType.Text
             ) {
-                node.text =
-                    this.token().text;
+                const token = this.token();
 
-                node.textOffset =
-                    this.token().offset;
+                const text = token.text;
 
-                node.textLength =
-                    this.token().length;
+                const left = text.search(/\S/);
+
+                if (left >= 0) {
+
+                    const right =
+                        text.length -
+                        text.trimEnd().length;
+
+                    node.text = text.trim();
+
+                    node.textOffset =
+                        token.offset + left;
+
+                    node.textLength =
+                        text.length - left - right;
+                }
 
                 this.next();
-
                 continue;
             }
 

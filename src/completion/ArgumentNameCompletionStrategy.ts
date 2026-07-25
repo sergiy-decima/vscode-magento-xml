@@ -19,6 +19,7 @@ export class ArgumentNameCompletionStrategy
         xml: XmlResolveResult
     ): vscode.CompletionItem[]
     {
+        // console.log("ArgumentNameCompletionStrategy");
         const owner =
             xml.ownerVirtualType ??
             xml.ownerType;
@@ -45,21 +46,35 @@ export class ArgumentNameCompletionStrategy
         }
 
         // console.log(constructor);
+        // console.log("OLOLO");
+        // console.log(
+        //     constructor.parameters.map(p => p.name)
+        // );
 
         return constructor.parameters.map(
             parameter => {
 
-                const item =
-                    new vscode.CompletionItem(
-                        parameter.name,
-                        vscode.CompletionItemKind.Field
-                    );
+                const item = new vscode.CompletionItem(
+                    parameter.name,
+                    vscode.CompletionItemKind.Field
+                );
 
-                item.insertText =
-                    parameter.name;
+                item.label = parameter.name;
+                item.insertText = parameter.name;
+                item.filterText = parameter.name;
+                item.sortText = parameter.name;
+                item.detail = parameter.type;
 
-                item.detail =
-                    parameter.type;
+                // const attribute = xml.attribute!;
+                // item.textEdit = new vscode.TextEdit(
+                //     new vscode.Range(
+                //         document.positionAt(attribute.offset),
+                //         document.positionAt(attribute.offset + attribute.length)
+                //     ),
+                //     parameter.name
+                // );
+                // item.filterText = parameter.name;
+                // item.sortText = parameter.name;
 
                 return item;
             }

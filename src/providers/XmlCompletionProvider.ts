@@ -33,6 +33,12 @@ export class XmlCompletionProvider
         );
 
         // console.log(result);
+        console.log('Papapa');
+        console.log({
+            offset: document.offsetAt(position),
+            attribute: result.attribute?.name,
+            value: result.attribute?.value
+        });
 
         return this.engine.complete(
             document,
