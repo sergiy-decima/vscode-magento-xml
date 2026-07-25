@@ -1,5 +1,3 @@
-import * as vscode from "vscode";
-
 import { XmlAttribute } from "./ast/XmlAttribute";
 import { XmlDocument } from "./ast/XmlDocument";
 import { XmlNode } from "./ast/XmlNode";
@@ -10,18 +8,22 @@ export interface XmlResolveResult
 
     attribute?: XmlAttribute;
 
+    ownerType?: XmlNode;
+    ownerVirtualType?: XmlNode;
+    ownerPreference?: XmlNode;
+    ownerPlugin?: XmlNode;
+
+    ownerArgument?: XmlNode;
+    ownerItem?: XmlNode;
+
+    argumentType?: string;
+
+    inAttribute: boolean;
+
     /**
      * Cursor is inside node text.
      */
     inText: boolean;
-
-    ownerType?: XmlNode;
-
-    ownerVirtualType?: XmlNode;
-
-    ownerPreference?: XmlNode;
-
-    ownerPlugin?: XmlNode;
 }
 
 export class XmlResolver
@@ -35,6 +37,7 @@ export class XmlResolver
 
         if (!node) {
             return {
+                inAttribute: false,
                 inText: false
             };
         }
@@ -55,11 +58,36 @@ export class XmlResolver
         return {
             node,
             attribute,
-            inText: node.containsText(offset),
-            ownerType: node.closest("type"),
-            ownerVirtualType: node.closest("virtualType"),
-            ownerPreference: node.closest("preference"),
-            ownerPlugin: node.closest("plugin")
+
+            ownerType: this.closest(node, "type"),
+            ownerVirtualType: this.closest(node, "virtualType"),
+            ownerPreference: this.closest(node, "preference"),
+            ownerPlugin: this.closest(node, "plugin"),
+
+            ownerArgument: this.closest(node, "argument"),
+            ownerItem: this.closest(node, "item"),
+
+            argumentType:
+                this.closest(node, "argument")
+                    ?.attribute("xsi:type")
+                    ?.value ??
+                this.closest(node, "item")
+                    ?.attribute("xsi:type")
+                    ?.value,
+
+            inAttribute: attribute !== undefined,
+
+            inText:
+                attribute === undefined &&
+                node.containsText(offset)
         };
+    }
+
+    private closest(
+        node: XmlNode,
+        name: string
+    ): XmlNode | undefined
+    {
+        return node.closest(name);
     }
 }

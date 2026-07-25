@@ -34,6 +34,7 @@ import { PhpMethodResolver } from "./php/resolver/PhpMethodResolver";
 import { XmlFileCache } from "./xml/cache/XmlFileCache";
 import { ArgumentNameCompletionStrategy } from "./completion/ArgumentNameCompletionStrategy";
 import { ArgumentObjectCompletionStrategy } from "./completion/ArgumentObjectCompletionStrategy";
+import { ItemObjectCompletionStrategy } from "./completion/ItemObjectCompletionStrategy";
 
 let registry = new TypeRegistry();
 let cache = new PhpFileCache();
@@ -83,7 +84,8 @@ export async function activate(
         new PluginTypeCompletionStrategy(registry, completionFactory),
         new TypeNameCompletionStrategy(registry, completionFactory),
         new ArgumentNameCompletionStrategy(methodResolver),
-        new ArgumentObjectCompletionStrategy(registry, completionFactory)
+        new ArgumentObjectCompletionStrategy(registry, completionFactory),
+        new ItemObjectCompletionStrategy(registry, completionFactory)
     ]);
 
     const implementationResolver = new ImplementationResolver(registry);

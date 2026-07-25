@@ -4,10 +4,10 @@ import { PhpTypeKind } from "../php/ast/PhpTypeKind";
 import { AbstractPhpTypeCompletionStrategy } from "./AbstractPhpTypeCompletionStrategy";
 import { XmlResolveResult } from "../xml/XmlResolver";
 
-export class ArgumentObjectCompletionStrategy
+export class ItemObjectCompletionStrategy
     extends AbstractPhpTypeCompletionStrategy
 {
-    public readonly key = "argument:value";
+    public readonly key = "item:value";
 
     protected readonly phpKinds = [
         PhpTypeKind.Class,
