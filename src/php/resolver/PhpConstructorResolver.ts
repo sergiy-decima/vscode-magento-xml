@@ -14,19 +14,23 @@ export class PhpConstructorResolver
         parameter: string
     )
     {
-        const constructor =
-            this.resolveConstructor(className);
-
-        if (!constructor) {
-            return;
-        }
-
-        return constructor.parameters.find(
-            p => p.name === parameter
-        );
+        return this.resolveConstructor(className)
+            ?.parameters.find(
+                p => p.name === parameter
+            );
     }
 
     public resolveConstructor(
+        className: string
+    )
+    {
+        return this.resolveType(className)
+            ?.methods.find(
+                method => method.name === "__construct"
+            );
+    }
+
+    public resolveType(
         className: string
     )
     {
@@ -42,16 +46,30 @@ export class PhpConstructorResolver
             return;
         }
 
-        const phpType = phpFile.types.find(
+        return phpFile.types.find(
             t => t.fqcn === className
         );
+    }
 
-        if (!phpType) {
-            return;
-        }
+    public resolveProperty(
+        className: string,
+        propertyName: string
+    )
+    {
+        return this.resolveType(className)
+            ?.properties.find(
+                property => property.name === propertyName
+            );
+    }
 
-        return phpType.methods.find(
-            m => m.name === "__construct"
-        );
+    public resolveMethod(
+        className: string,
+        methodName: string
+    )
+    {
+        return this.resolveType(className)
+            ?.methods.find(
+                method => method.name === methodName
+            );
     }
 }
