@@ -72,7 +72,7 @@ export async function activate(
     await eventsBuilder.build();
     console.log("Events index ready");
 
-  const memberResolver = new PhpMemberResolver(members);
+    const memberResolver = new PhpMemberResolver(members);
     const definitionResolver = new DefinitionResolver(registry, diIndex, memberResolver, documents);
     const hoverResolver = new HoverResolver(registry, diIndex);
     const referenceResolver = new ReferenceResolver(diIndex);

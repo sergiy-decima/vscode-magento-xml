@@ -1,29 +1,18 @@
-import { MemberKind } from "../../index/MemberEntry";
+import { MemberEntry, MemberKind } from "../../index/MemberEntry";
 import { MemberRegistry } from "../../index/MemberRegistry";
-import { MemberEntry } from "../../index/MemberEntry";
 
 export class PhpMemberResolver
 {
     constructor(
-        private readonly members: MemberRegistry
+        private readonly registry: MemberRegistry
     ) {}
-
-    public resolveConstructor(
-        className: string
-    ): MemberEntry | undefined
-    {
-        return this.resolveMethod(
-            className,
-            "__construct"
-        );
-    }
 
     public resolveMethod(
         className: string,
         method: string
     ): MemberEntry | undefined
     {
-        return this.members.find(
+        return this.registry.find(
             className,
             MemberKind.Method,
             method
@@ -35,7 +24,7 @@ export class PhpMemberResolver
         property: string
     ): MemberEntry | undefined
     {
-        return this.members.find(
+        return this.registry.find(
             className,
             MemberKind.Property,
             property
@@ -47,7 +36,7 @@ export class PhpMemberResolver
         constant: string
     ): MemberEntry | undefined
     {
-        return this.members.find(
+        return this.registry.find(
             className,
             MemberKind.Constant,
             constant
