@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 export interface XmlContext
 {
     ownerType?: string;
+    ownerVirtualType?: string;
 }
 
 export class XmlContextResolver
@@ -26,6 +27,7 @@ export class XmlContextResolver
 
         while ((match = typeRegex.exec(text)) !== null) {
             result.ownerType = match[1];
+            result.ownerVirtualType = undefined;
         }
 
         //
@@ -35,7 +37,8 @@ export class XmlContextResolver
             /<virtualType\s+[^>]*type="([^"]+)"/g;
 
         while ((match = virtualRegex.exec(text)) !== null) {
-            result.ownerType = match[1];
+            result.ownerVirtualType = match[1];
+            result.ownerType = undefined;
         }
 
         return result;

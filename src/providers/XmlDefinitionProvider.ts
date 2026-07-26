@@ -1,12 +1,17 @@
 import * as vscode from "vscode";
+
 import { XmlAttributeResolver } from "../xml/XmlAttributeResolver";
 import { DefinitionResolver } from "../resolvers/DefinitionResolver";
-import { XmlContextResolver } from "../xml/XmlContextResolver";
+import { XmlFileCache } from "../xml/cache/XmlFileCache";
+import { XmlResolver } from "../xml/XmlResolver";
 
 export class XmlDefinitionProvider implements vscode.DefinitionProvider
 {
+    private readonly xmlResolver = new XmlResolver();
+
     constructor(
-        private definitionResolver: DefinitionResolver
+        private readonly xmlCache: XmlFileCache,
+        private readonly definitionResolver: DefinitionResolver
     ) {}
 
     public async provideDefinition(
@@ -23,23 +28,16 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
             return;
         }
 
-        const context = XmlContextResolver.resolve(
-            document,
-            document.offsetAt(position)
-        );
-
+        //
         // <argument name="...">
+        //
         if (
             match.tag === "argument" &&
-            match.attribute === "name" &&
-            context?.ownerType
+            match.attribute === "name"
         ) {
-
-            console.log("XML context:", context);
-            console.log("XML match:", match);
-
             return this.definitionResolver.resolveArgument(
-                context.ownerType,
+                document,
+                position,
                 match.value
             );
         }

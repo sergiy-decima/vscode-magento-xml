@@ -10,6 +10,9 @@ import { PluginDefinitionStrategy } from "./definition/PluginDefinitionStrategy"
 import { ObserverDefinitionStrategy } from "./definition/ObserverDefinitionStrategy";
 import { PhpMemberResolver } from "../php/resolver/PhpMemberResolver";
 import { DocumentManager } from "../vscode/DocumentManager";
+import { XmlValueMatch } from "../xml/XmlAttributeResolver";
+import { XmlResolver } from "../xml/XmlResolver";
+import { XmlFileCache } from "../xml/cache/XmlFileCache";
 
 export class DefinitionResolver
 {
@@ -19,7 +22,8 @@ export class DefinitionResolver
         private readonly registry: TypeRegistry,
         private readonly diIndex: DiIndex,
         private readonly memberResolver: PhpMemberResolver,
-        private readonly documents: DocumentManager
+        private readonly documents: DocumentManager,
+        private readonly xmlCache: XmlFileCache
     ) {
         this.strategies = [
             new PhpClassDefinitionStrategy(
@@ -62,13 +66,43 @@ export class DefinitionResolver
     }
 
     public async resolveArgument(
-        ownerClass: string,
+        document: vscode.TextDocument,
+        position: vscode.Position,
         parameterName: string
     ): Promise<vscode.Location | undefined>
     {
+        const xml = this.xmlCache.get(document.fileName);
+
+        if (!xml) {
+            return;
+        }
+
+        const resolver = new XmlResolver();
+
+        const context = resolver.resolve(
+            xml,
+            document.offsetAt(position)
+        );
+
+        const owner =
+            context.ownerVirtualType ??
+            context.ownerType;
+
+        if (!owner) {
+            return;
+        }
+
+        const className =
+            owner.attribute("type")?.value ??
+            owner.attribute("name")?.value;
+
+        if (!className) {
+            return;
+        }
+
         const constructor =
             this.memberResolver.resolveMethod(
-                ownerClass,
+                className,
                 "__construct"
             );
 
@@ -85,8 +119,24 @@ export class DefinitionResolver
             return;
         }
 
+        return new vscode.Location(
+            constructor.uri,
+            await this.documents.position(
+                constructor.uri,
+                parameter.offset
+            )
+        );
+    }
+
+    public async resolveObjectValue(
+        ownerClass: string,
+        match: XmlValueMatch
+    ): Promise<vscode.Location | undefined>
+    {
         const type =
-            this.registry.find(ownerClass);
+            this.registry.find(
+                match.value
+            );
 
         if (!type) {
             return;
@@ -96,7 +146,7 @@ export class DefinitionResolver
             type.uri,
             await this.documents.position(
                 type.uri,
-                parameter.offset
+                type.offset
             )
         );
     }

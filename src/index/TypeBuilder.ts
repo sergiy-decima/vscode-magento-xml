@@ -71,25 +71,25 @@ export class TypeBuilder {
         // }
 
         this.fileCache.set(document.file, phpFile);
+
         for (const phpType of phpFile.types) {
 
             this.registry.add(
-                this.factory.create(
-                    document.file,
-                    phpType
-                )
+                this.factory.create(document.file, phpType)
             );
 
-            for (const member of this.memberFactory.create(
-                document.file,
-                phpType
-            )) {
+            const members =
+                this.memberFactory.create(
+                    document.file,
+                    phpType
+                );
 
+            for (const member of members) {
                 this.members.add(member);
-
             }
-
         }
+
+        // console.log("Members:", this.members);
     }
 
     public removeFile(file: string): void {

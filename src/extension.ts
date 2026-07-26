@@ -73,7 +73,7 @@ export async function activate(
     console.log("Events index ready");
 
     const memberResolver = new PhpMemberResolver(members);
-    const definitionResolver = new DefinitionResolver(registry, diIndex, memberResolver, documents);
+    const definitionResolver = new DefinitionResolver(registry, diIndex, memberResolver, documents, xmlCache);
     const hoverResolver = new HoverResolver(registry, diIndex);
     const referenceResolver = new ReferenceResolver(diIndex);
     const completionFactory = new CompletionItemFactory();
@@ -94,7 +94,7 @@ export async function activate(
     context.subscriptions.push(
         vscode.languages.registerDefinitionProvider(
             {scheme: "file", language: "xml"},
-            new XmlDefinitionProvider(definitionResolver)
+            new XmlDefinitionProvider(xmlCache, definitionResolver)
         )
     );
 
