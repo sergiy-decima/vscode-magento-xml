@@ -97,10 +97,13 @@ export class PhpTypeParser extends PhpParserBase {
             kind: this.mapKind(keyword),
             offset: nameToken.offset,
             length: nameToken.length,
+
             extends: undefined,
             implements: [],
             traits: [],
+
             properties: [],
+            constants: [],
             methods: []
         };
 

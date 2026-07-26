@@ -54,6 +54,7 @@ export interface PhpType {
     traits: string[];
 
     properties: PhpProperty[];
+    constants: PhpConstant[];
     methods: PhpMethod[];
 }
 
@@ -80,6 +81,13 @@ export interface PhpMethod {
 export interface PhpParameter {
     name: string;
     type?: string;
+    offset: number;
+    length: number;
+}
+
+export interface PhpConstant
+{
+    name: string;
     offset: number;
     length: number;
 }

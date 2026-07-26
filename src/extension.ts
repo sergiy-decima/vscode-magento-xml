@@ -35,10 +35,12 @@ import { XmlFileCache } from "./xml/cache/XmlFileCache";
 import { ArgumentNameCompletionStrategy } from "./completion/ArgumentNameCompletionStrategy";
 import { ArgumentObjectCompletionStrategy } from "./completion/ArgumentObjectCompletionStrategy";
 import { ItemObjectCompletionStrategy } from "./completion/ItemObjectCompletionStrategy";
+import { MemberRegistry } from "./index/MemberRegistry";
 
 let registry = new TypeRegistry();
+let members = new MemberRegistry();
 let cache = new PhpFileCache();
-let builder = new TypeBuilder(registry, cache);
+let builder = new TypeBuilder(registry, members, cache);
 // let diIndex = new DiIndex();
 // let diBuilder = new DiBuilder(diIndex);
 let documents = new DocumentManager();

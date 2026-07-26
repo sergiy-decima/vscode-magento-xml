@@ -11,10 +11,13 @@ export class PhpReferenceList {
         name: string,
         offset: number,
         length: number,
-        kind: PhpReferenceKind
-    ): void {
+        kind: PhpReferenceKind,
+        member?: string
+    ): void
+    {
         this.references.push({
             name,
+            member,
             offset,
             length,
             kind

@@ -24,6 +24,7 @@ export enum TokenType {
     Protected,
     Private,
     Static,
+    Const,
     Variable,
     Arrow,
     OpenParen,

@@ -7,6 +7,7 @@ import { PhpMethodParser } from "./PhpMethodParser";
 import { PhpReferenceKind } from "../ast/PhpReference";
 import { PhpTypeNameParser } from "./PhpTypeNameParser";
 import { PhpMethodBodyParser } from "./PhpMethodBodyParser";
+import { PhpConstantParser } from "./PhpConstantParser";
 
 /**
  * Parses class/interface/trait/enum body.
@@ -24,6 +25,7 @@ import { PhpMethodBodyParser } from "./PhpMethodBodyParser";
  */
 export class PhpClassBodyParser extends PhpParserBase {
     private readonly typeNameParser: PhpTypeNameParser;
+    private readonly constantParser: PhpConstantParser;
 
     public constructor(
         stream: PhpTokenStream,
@@ -31,6 +33,7 @@ export class PhpClassBodyParser extends PhpParserBase {
     ) {
         super(stream);
         this.typeNameParser = new PhpTypeNameParser(stream);
+        this.constantParser = new PhpConstantParser(stream);
     }
 
     /**
@@ -122,11 +125,15 @@ export class PhpClassBodyParser extends PhpParserBase {
         }
     }
 
-    private readMember(type: PhpType): void {
+    private readMember(type: PhpType): void
+    {
         const visibility = this.readVisibility();
+
         let isStatic = false;
         let isReadonly = false;
+
         while (true) {
+
             if (this.match(TokenType.Static)) {
                 isStatic = true;
                 continue;
@@ -136,15 +143,59 @@ export class PhpClassBodyParser extends PhpParserBase {
                 isReadonly = true;
                 continue;
             }
+
             break;
         }
 
-        if (this.match(TokenType.Function)) {
-            this.readMethod(type, visibility, isStatic);
+        if (this.match(TokenType.Const)) {
+            this.readConstant(type);
             return;
         }
 
-        this.readProperty(type, visibility, isStatic, isReadonly);
+        if (this.match(TokenType.Function)) {
+            this.readMethod(
+                type,
+                visibility,
+                isStatic
+            );
+            return;
+        }
+
+        this.readProperty(
+            type,
+            visibility,
+            isStatic,
+            isReadonly
+        );
+    }
+
+    private readConstant(
+        type: PhpType
+    ): void
+    {
+        while (!this.eof()) {
+
+            if (
+                this.tokenType() === TokenType.Identifier
+            ) {
+                const token = this.token();
+
+                type.constants.push({
+                    name: token.text,
+                    offset: token.offset,
+                    length: token.length
+                });
+
+                this.next();
+                continue;
+            }
+
+            if (this.match(TokenType.Semicolon)) {
+                return;
+            }
+
+            this.next();
+        }
     }
 
     private readMethod(

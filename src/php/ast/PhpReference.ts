@@ -8,7 +8,8 @@
  * new Baz()
  * function test(LoggerInterface $logger)
  */
-export interface PhpReference {
+export interface PhpReference
+{
     /**
      * Referenced type name.
      *
@@ -17,6 +18,15 @@ export interface PhpReference {
      *  Magento\Framework\App\State
      */
     name: string;
+
+    /**
+     * Method / property / constant.
+     *
+     * Example:
+     * Foo::execute()
+     *      ^^^^^^^
+     */
+    member?: string;
 
     /**
      * Offset inside source file.

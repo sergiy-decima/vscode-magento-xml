@@ -76,4 +76,13 @@ export class PhpTokenStream {
         this.lexer.scan();
         return this.lexer.token();
     }
+
+    public peekType(): TokenType
+    {
+        const lexer = this.lexer.clone();
+
+        lexer.scan();
+
+        return lexer.tokenType();
+    }
 }

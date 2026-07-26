@@ -1,3 +1,5 @@
+import * as vscode from "vscode";
+
 import { TypeRegistry } from "./TypeRegistry";
 import { TypeEntryFactory } from "./TypeEntryFactory";
 import { TypeDocumentReader } from "./TypeDocumentReader";
@@ -6,6 +8,8 @@ import { PhpLexer } from "../php/lexer/PhpLexer";
 import { PhpTokenStream } from "../php/parser/PhpTokenStream";
 import { PhpFileParser } from "../php/parser/PhpFileParser";
 import { PhpFileCache } from "../php/cache/PhpFileCache";
+import { MemberRegistry } from "./MemberRegistry";
+import { MemberKind } from "./MemberEntry";
 
 /**
  * Координує процес побудови.
@@ -20,8 +24,9 @@ export class TypeBuilder {
     private readonly reader = new TypeDocumentReader();
     private readonly factory = new TypeEntryFactory();
 
-    public constructor(
+   public constructor(
         private readonly registry: TypeRegistry,
+        private readonly members: MemberRegistry,
         private readonly fileCache: PhpFileCache
     ) {
     }
@@ -34,6 +39,7 @@ export class TypeBuilder {
      */
     public async build(source: TypeIndexSource): Promise<void> {
         this.registry.clear();
+        this.members.clear();
         this.fileCache.clear();
         for await (const sourceEntry of source.entries()) {
             await this.buildFile(sourceEntry.file);
@@ -65,6 +71,45 @@ export class TypeBuilder {
         this.fileCache.set(document.file, phpFile);
         for (const phpType of phpFile.types) {
             this.registry.add( this.factory.create(document.file, phpType) );
+
+            for (const method of phpType.methods) {
+
+                this.members.add({
+                    fqcn: phpType.fqcn,
+                    kind: MemberKind.Method,
+                    name: method.name,
+                    uri: vscode.Uri.file(document.file),
+                    offset: method.offset,
+                    length: method.length
+                });
+
+            }
+
+            for (const property of phpType.properties) {
+
+                this.members.add({
+                    fqcn: phpType.fqcn,
+                    kind: MemberKind.Property,
+                    name: property.name,
+                    uri: vscode.Uri.file(document.file),
+                    offset: property.offset,
+                    length: property.length
+                });
+
+            }
+
+            for (const constant of phpType.constants) {
+
+                this.members.add({
+                    fqcn: phpType.fqcn,
+                    kind: MemberKind.Constant,
+                    name: constant.name,
+                    uri: vscode.Uri.file(document.file),
+                    offset: constant.offset,
+                    length: constant.length
+                });
+
+            }
             
             // console.log(phpType);
 

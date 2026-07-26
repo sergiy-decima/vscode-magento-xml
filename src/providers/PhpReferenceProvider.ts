@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { PhpFileCache } from "../php/cache/PhpFileCache";
-import { PhpTokenLocator } from "../php/parser/PhpTokenLocator";
+import { PhpReferenceLocator } from "../php/resolver/PhpReferenceLocator";
 import { PhpReferenceResolver } from "../php/resolver/PhpReferenceResolver";
 import { TypeRegistry } from "../index/TypeRegistry";
 import { ReferenceResolver } from "../resolvers/ReferenceResolver";
@@ -9,16 +9,19 @@ import { ReferenceResolver } from "../resolvers/ReferenceResolver";
 export class PhpReferenceProvider
     implements vscode.ReferenceProvider
 {
-    private readonly locator = new PhpTokenLocator();
+    private readonly locator =
+        new PhpReferenceLocator();
 
-    private readonly phpResolver: PhpReferenceResolver;
+    private readonly phpResolver:
+        PhpReferenceResolver;
 
     constructor(
         registry: TypeRegistry,
         private readonly fileCache: PhpFileCache,
         private readonly resolver: ReferenceResolver
     ) {
-        this.phpResolver = new PhpReferenceResolver(registry);
+        this.phpResolver =
+            new PhpReferenceResolver(registry);
     }
 
     public provideReferences(
@@ -26,32 +29,35 @@ export class PhpReferenceProvider
         position: vscode.Position
     ): vscode.ProviderResult<vscode.Location[]>
     {
-        const phpFile = this.fileCache.get(document.fileName);
+        const phpFile =
+            this.fileCache.get(document.fileName);
 
         if (!phpFile) {
             return [];
         }
 
-        const offset = document.offsetAt(position);
+        const reference =
+            this.locator.find(
+                phpFile,
+                document.offsetAt(position)
+            );
 
-        const token = this.locator.find(
-            document.getText(),
-            offset
-        );
-
-        if (!token) {
+        if (!reference) {
             return [];
         }
 
-        const type = this.phpResolver.resolve(
-            phpFile,
-            token.text
-        );
+        const type =
+            this.phpResolver.resolve(
+                phpFile,
+                reference.name
+            );
 
         if (!type) {
             return [];
         }
 
-        return this.resolver.resolve(type.fqcn);
+        return this.resolver.resolve(
+            type.fqcn
+        );
     }
 }

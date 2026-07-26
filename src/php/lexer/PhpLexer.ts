@@ -19,6 +19,7 @@ const keywords = new Map<string, TokenType>([
     ["protected", TokenType.Protected],
     ["private", TokenType.Private],
     ["static", TokenType.Static],
+    ["const", TokenType.Const],
     ["new", TokenType.New],
     ["instanceof", TokenType.Instanceof],
 ]);
@@ -363,5 +364,14 @@ export class PhpLexer {
             (ch >= 97 && ch <= 122) ||  // a-z
             ch === 95                   // _
         );
+    }
+
+    public clone(): PhpLexer
+    {
+        const lexer = new PhpLexer(this.source);
+        lexer.pos = this.pos;
+        lexer.current = { ...this.current };
+
+        return lexer;
     }
 }
