@@ -34,18 +34,18 @@ export class PhpImplementationProvider implements vscode.ImplementationProvider
 
         const offset = document.offsetAt(position);
 
-        const token = this.locator.find(
+        const context = this.locator.find(
             document.getText(),
             offset
         );
 
-        if (!token) {
+        if (!context) {
             return [];
         }
 
         const type = this.phpResolver.resolve(
             phpFile,
-            token.text
+            context.current.text
         );
 
         if (!type) {

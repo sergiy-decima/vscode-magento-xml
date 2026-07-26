@@ -8,7 +8,7 @@ import { VirtualTypeDefinitionStrategy } from "./definition/VirtualTypeDefinitio
 import { PreferenceDefinitionStrategy } from "./definition/PreferenceDefinitionStrategy";
 import { PluginDefinitionStrategy } from "./definition/PluginDefinitionStrategy";
 import { ObserverDefinitionStrategy } from "./definition/ObserverDefinitionStrategy";
-import { PhpConstructorResolver } from "../php/resolver/PhpConstructorResolver";
+import { PhpMemberResolver } from "../php/resolver/PhpMemberResolver";
 import { DocumentManager } from "../vscode/DocumentManager";
 
 export class DefinitionResolver
@@ -18,7 +18,7 @@ export class DefinitionResolver
     constructor(
         private readonly registry: TypeRegistry,
         private readonly diIndex: DiIndex,
-        private readonly constructorResolver: PhpConstructorResolver,
+        private readonly memberResolver: PhpMemberResolver,
         private readonly documents: DocumentManager
     ) {
         this.strategies = [
@@ -66,16 +66,27 @@ export class DefinitionResolver
         parameterName: string
     ): Promise<vscode.Location | undefined>
     {
-        const parameter = this.constructorResolver.resolve(
-            ownerClass,
-            parameterName
-        );
+        const constructor =
+            this.memberResolver.resolveMethod(
+                ownerClass,
+                "__construct"
+            );
+
+        if (!constructor) {
+            return;
+        }
+
+        const parameter =
+            constructor.parameters?.find(
+                p => p.name === parameterName
+            );
 
         if (!parameter) {
             return;
         }
 
-        const type = this.registry.find(ownerClass);
+        const type =
+            this.registry.find(ownerClass);
 
         if (!type) {
             return;

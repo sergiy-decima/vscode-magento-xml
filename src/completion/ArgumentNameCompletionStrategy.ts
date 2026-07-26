@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 
 import { ICompletionStrategy } from "./ICompletionStrategy";
 import { XmlResolveResult } from "../xml/XmlResolver";
-import { PhpMethodResolver } from "../php/resolver/PhpMethodResolver";
+import { PhpMemberResolver } from "../php/resolver/PhpMemberResolver";
 
 export class ArgumentNameCompletionStrategy
     implements ICompletionStrategy
@@ -10,7 +10,7 @@ export class ArgumentNameCompletionStrategy
     public readonly key = "argument:name";
 
     constructor(
-        private readonly resolver: PhpMethodResolver
+        private readonly resolver: PhpMemberResolver
     ) {}
 
     public complete(
@@ -51,7 +51,7 @@ export class ArgumentNameCompletionStrategy
         //     constructor.parameters.map(p => p.name)
         // );
 
-        return constructor.parameters.map(
+        return (constructor.parameters ?? []).map(
             parameter => {
 
                 const item = new vscode.CompletionItem(

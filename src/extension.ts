@@ -29,13 +29,12 @@ import { EventsBuilder } from "./index/EventsBuilder";
 import { PhpReferenceProvider } from "./providers/PhpReferenceProvider";
 import { ImplementationResolver } from "./resolvers/ImplementationResolver";
 import { PhpImplementationProvider } from "./providers/PhpImplementationProvider";
-import { PhpConstructorResolver } from "./php/resolver/PhpConstructorResolver";
-import { PhpMethodResolver } from "./php/resolver/PhpMethodResolver";
 import { XmlFileCache } from "./xml/cache/XmlFileCache";
 import { ArgumentNameCompletionStrategy } from "./completion/ArgumentNameCompletionStrategy";
 import { ArgumentObjectCompletionStrategy } from "./completion/ArgumentObjectCompletionStrategy";
 import { ItemObjectCompletionStrategy } from "./completion/ItemObjectCompletionStrategy";
 import { MemberRegistry } from "./index/MemberRegistry";
+import { PhpMemberResolver } from "./php/resolver/PhpMemberResolver";
 
 let registry = new TypeRegistry();
 let members = new MemberRegistry();
@@ -73,9 +72,8 @@ export async function activate(
     await eventsBuilder.build();
     console.log("Events index ready");
 
-    const constructorResolver = new PhpConstructorResolver(registry, cache);
-    const methodResolver = new PhpMethodResolver(registry, cache);
-    const definitionResolver = new DefinitionResolver(registry, diIndex, constructorResolver, documents);
+  const memberResolver = new PhpMemberResolver(members);
+    const definitionResolver = new DefinitionResolver(registry, diIndex, memberResolver, documents);
     const hoverResolver = new HoverResolver(registry, diIndex);
     const referenceResolver = new ReferenceResolver(diIndex);
     const completionFactory = new CompletionItemFactory();
@@ -85,7 +83,7 @@ export async function activate(
         new VirtualTypeTypeCompletionStrategy(registry, completionFactory),
         new PluginTypeCompletionStrategy(registry, completionFactory),
         new TypeNameCompletionStrategy(registry, completionFactory),
-        new ArgumentNameCompletionStrategy(methodResolver),
+        new ArgumentNameCompletionStrategy(memberResolver),
         new ArgumentObjectCompletionStrategy(registry, completionFactory),
         new ItemObjectCompletionStrategy(registry, completionFactory)
     ]);

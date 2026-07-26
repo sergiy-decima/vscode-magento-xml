@@ -10,6 +10,7 @@ import { PhpFileParser } from "../php/parser/PhpFileParser";
 import { PhpFileCache } from "../php/cache/PhpFileCache";
 import { MemberRegistry } from "./MemberRegistry";
 import { MemberKind } from "./MemberEntry";
+import { MemberEntryFactory } from "./MemberEntryFactory";
 
 /**
  * Координує процес побудови.
@@ -23,6 +24,7 @@ import { MemberKind } from "./MemberEntry";
 export class TypeBuilder {
     private readonly reader = new TypeDocumentReader();
     private readonly factory = new TypeEntryFactory();
+    private readonly memberFactory = new MemberEntryFactory();
 
    public constructor(
         private readonly registry: TypeRegistry,
@@ -60,85 +62,33 @@ export class TypeBuilder {
         const parser = new PhpFileParser(stream);
         const phpFile = parser.parse();
 
-        for (const type of phpFile.types) {
-            if ('Magento\\Framework\\App\\Request\\Http' == type.fqcn) {
-            console.log("TYPE:", type.fqcn);
-            console.log("EXTENDS:", type.extends);
-            console.log("IMPLEMENTS:", type.implements);
-            }
-        }
+        // for (const type of phpFile.types) {
+        //     if ('Magento\\Framework\\App\\Request\\Http' == type.fqcn) {
+        //     console.log("TYPE:", type.fqcn);
+        //     console.log("EXTENDS:", type.extends);
+        //     console.log("IMPLEMENTS:", type.implements);
+        //     }
+        // }
 
         this.fileCache.set(document.file, phpFile);
         for (const phpType of phpFile.types) {
-            this.registry.add( this.factory.create(document.file, phpType) );
 
-            for (const method of phpType.methods) {
+            this.registry.add(
+                this.factory.create(
+                    document.file,
+                    phpType
+                )
+            );
 
-                this.members.add({
-                    fqcn: phpType.fqcn,
-                    kind: MemberKind.Method,
-                    name: method.name,
-                    uri: vscode.Uri.file(document.file),
-                    offset: method.offset,
-                    length: method.length
-                });
+            for (const member of this.memberFactory.create(
+                document.file,
+                phpType
+            )) {
 
-            }
-
-            for (const property of phpType.properties) {
-
-                this.members.add({
-                    fqcn: phpType.fqcn,
-                    kind: MemberKind.Property,
-                    name: property.name,
-                    uri: vscode.Uri.file(document.file),
-                    offset: property.offset,
-                    length: property.length
-                });
+                this.members.add(member);
 
             }
 
-            for (const constant of phpType.constants) {
-
-                this.members.add({
-                    fqcn: phpType.fqcn,
-                    kind: MemberKind.Constant,
-                    name: constant.name,
-                    uri: vscode.Uri.file(document.file),
-                    offset: constant.offset,
-                    length: constant.length
-                });
-
-            }
-            
-            // console.log(phpType);
-
-            // console.log("CLASS:", phpType.fqcn);
-            // for (const property of phpType.properties) {
-            //     console.log(
-            //         "PROPERTY:",
-            //         property.visibility,
-            //         property.type,
-            //         property.name
-            //     );
-            // }
-            // for (const method of phpType.methods) {
-            //     console.log(
-            //         "METHOD:",
-            //         method.visibility,
-            //         method.isStatic,
-            //         method.name,
-            //         "return:",
-            //         method.returnType
-            //     );
-            //     for (const param of method.parameters) {
-            //         console.log(
-            //             "PARAM:",
-            //             param.type,
-            //             param.name
-            //         );
-            //     }
-            // }
         }
     }
 

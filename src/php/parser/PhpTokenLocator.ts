@@ -2,31 +2,59 @@ import { PhpLexer } from "../lexer/PhpLexer";
 import { PhpToken } from "../lexer/PhpToken";
 import { TokenType } from "../lexer/TokenType";
 
+export interface PhpTokenContext
+{
+    previous?: PhpToken;
+
+    current: PhpToken;
+
+    next?: PhpToken;
+}
+
 /**
- * Finds a token at a given document offset.
+ * Finds token under cursor together with neighbour tokens.
  */
 export class PhpTokenLocator {
-    /**
-     * Returns the token containing the specified offset.
-     */
     public find(
         content: string,
         offset: number
-    ): PhpToken | undefined {
+    ): PhpTokenContext | undefined
+    {
         const lexer = new PhpLexer(content);
+
+        let previous: PhpToken | undefined;
+        let current: PhpToken | undefined;
+
         while (true) {
+
             const type = lexer.scan();
+
             if (type === TokenType.EOF) {
                 return undefined;
             }
 
-            const token = lexer.token();
+            current = lexer.token();
+
             if (
-                offset >= token.offset &&
-                offset < token.offset + token.length
+                offset >= current.offset &&
+                offset < current.offset + current.length
             ) {
-                return token;
+
+                lexer.scan();
+
+                const next =
+                    lexer.tokenType() === TokenType.EOF
+                        ? undefined
+                        : lexer.token();
+
+                return {
+                    previous,
+                    current,
+                    next
+                };
             }
+
+            previous = current;
         }
     }
 }
