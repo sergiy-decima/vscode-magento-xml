@@ -24,9 +24,20 @@ export abstract class AbstractDefinitionStrategy
         const document =
             await vscode.workspace.openTextDocument(uri);
 
+        const position =
+            document.positionAt(offset);
+
+        console.log(
+            "LOCATION",
+            uri.fsPath,
+            offset,
+            position.line,
+            position.character
+        );
+
         return new vscode.Location(
             uri,
-            document.positionAt(offset)
+            position
         );
     }
 
@@ -42,6 +53,7 @@ export abstract class AbstractDefinitionStrategy
         entry: {
             uri: vscode.Uri;
             offset: number;
+            nameOffset?: number;
         } | undefined
     ): Promise<vscode.Location | undefined>
     {
@@ -51,7 +63,7 @@ export abstract class AbstractDefinitionStrategy
 
         return this.toLocation(
             entry.uri,
-            entry.offset
+            entry.nameOffset ?? entry.offset
         );
     }
 }

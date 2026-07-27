@@ -16,10 +16,15 @@ export class PluginDefinitionStrategy
             return;
         }
 
-        const plugins = this.diIndex.findPlugins(match.value);
+        const plugin =
+            this.diIndex.findPlugins(match.value)[0];
+
+        if (!plugin) {
+            return;
+        }
 
         return this.toEntryLocation(
-            plugins[0]
+            this.registry.find(plugin.plugin)
         );
     }
 }

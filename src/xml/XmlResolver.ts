@@ -35,6 +35,15 @@ export class XmlResolver
     {
         const node = document.findNode(offset);
 
+        // console.log("OFFSET:", offset);
+        // console.log("NODE:", node?.name);
+        // console.log("TEXT:", node?.text);
+        // console.log(
+        //     "TEXT RANGE:",
+        //     node?.textOffset,
+        //     node?.textLength
+        // );
+
         if (!node) {
             return {
                 inAttribute: false,

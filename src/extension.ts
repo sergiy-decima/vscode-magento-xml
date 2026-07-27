@@ -35,6 +35,7 @@ import { ArgumentObjectCompletionStrategy } from "./completion/ArgumentObjectCom
 import { ItemObjectCompletionStrategy } from "./completion/ItemObjectCompletionStrategy";
 import { MemberRegistry } from "./index/MemberRegistry";
 import { PhpMemberResolver } from "./php/resolver/PhpMemberResolver";
+import { ObjectResolver } from "./resolvers/ObjectResolver";
 
 let registry = new TypeRegistry();
 let members = new MemberRegistry();
@@ -48,7 +49,10 @@ let documents = new DocumentManager();
 export async function activate(
     context: vscode.ExtensionContext
 ) {
-    console.log("Magento VSCode Tools activated");
+    // console.log("Magento VSCode Tools activated");
+    console.log("############################");
+    console.log("NEW EXTENSION ACTIVATED");
+    console.log("############################");
 
     // 🔥 1. будуємо індекс одразу при старті
     // ComposerDiscovery → PSR-4 → ClassIndexer → ClassIndex
@@ -73,7 +77,8 @@ export async function activate(
     console.log("Events index ready");
 
     const memberResolver = new PhpMemberResolver(members);
-    const definitionResolver = new DefinitionResolver(registry, diIndex, memberResolver, documents, xmlCache);
+    const objectResolver = new ObjectResolver(registry, diIndex, documents);
+    const definitionResolver = new DefinitionResolver(registry, objectResolver, diIndex, memberResolver, documents);
     const hoverResolver = new HoverResolver(registry, diIndex);
     const referenceResolver = new ReferenceResolver(diIndex);
     const completionFactory = new CompletionItemFactory();

@@ -32,11 +32,21 @@ export class PhpDefinitionProvider
         position: vscode.Position
     ): Promise<vscode.Location | undefined>
     {
+        console.log("########################");
+        console.log("PHP PROVIDER VERSION 777");
+        console.log("########################");
+
         const phpFile =
             this.fileCache.get(document.fileName);
 
         if (!phpFile) {
+            console.log("NO PHP FILE");
             return;
+        }
+
+        console.log("REFERENCES:", phpFile.references.length);
+        for (const reference of phpFile.references) {
+            console.log(reference);
         }
 
         const reference =
@@ -45,7 +55,18 @@ export class PhpDefinitionProvider
                 document.offsetAt(position)
             );
 
+        console.log(
+            "OFFSET:",
+            document.offsetAt(position)
+        );
+
+        console.log(
+            "REFERENCE:",
+            reference
+        );
+
         if (!reference) {
+            console.log("NO REFERENCE");
             return;
         }
 
@@ -56,15 +77,85 @@ export class PhpDefinitionProvider
             );
 
         if (!entry) {
+            console.log("NO ENTRY");
             return;
         }
 
-        return new vscode.Location(
-            entry.uri,
-            await this.documents.position(
-                entry.uri,
-                entry.offset
-            )
-        );
+        throw new Error("OUR PROVIDER");
+        return;
+
+        // const phpFile =
+        //     this.fileCache.get(document.fileName);
+
+        // if (!phpFile) {
+        //     return;
+        // }
+
+        // const reference =
+        //     this.locator.find(
+        //         phpFile,
+        //         document.offsetAt(position)
+        //     );
+
+        // if (!reference) {
+        //     return;
+        // }
+
+        // const entry =
+        //     this.resolver.resolve(
+        //         phpFile,
+        //         reference.name
+        //     );
+
+        // if (!entry) {
+        //     return;
+        // }
+
+        // const start =
+        //     await this.documents.position(
+        //         entry.uri,
+        //         entry.nameOffset
+        //     );
+
+        // const end =
+        //     await this.documents.position(
+        //         entry.uri,
+        //         entry.nameOffset + entry.nameLength
+        //     );
+
+        // // return new vscode.Location(
+        // //     entry.uri,
+        // //     new vscode.Range(start, end)
+        // // );
+
+        // // return new vscode.Location(
+        // //     entry.uri,
+        // //     await this.documents.position(
+        // //         entry.uri,
+        // //         entry.nameOffset
+        // //     )
+        // // );
+
+        // const position2 =
+        //     await this.documents.position(
+        //         entry.uri,
+        //         entry.nameOffset
+        //     );
+
+        // console.log("ENTRY:", entry);
+        // console.log("POSITION:", position2);
+        // console.log(
+        //     "OPEN",
+        //     entry.uri.fsPath,
+        //     entry.nameOffset,
+        //     position2.line,
+        //     position2.character
+        // );
+
+        // throw new Error("OUR PROVIDER");
+        // // return new vscode.Location(
+        // //     entry.uri,
+        // //     position2
+        // // );
     }
 }

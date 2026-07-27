@@ -65,25 +65,11 @@ export class DiBuilder
 
         const stats = this.index.stats();
 
-        console.log(
-            `DI entries: ${stats.references}`
-        );
-
-        console.log(
-            `Preferences: ${stats.preferences}`
-        );
-
-        console.log(
-            `VirtualTypes: ${stats.virtualTypes}`
-        );
-
-        console.log(
-            `Types: ${stats.types}`
-        );
-
-        console.log(
-            `Plugin targets: ${stats.plugins}`
-        );
+        console.log(`DI entries: ${stats.references}`);
+        console.log(`Preferences: ${stats.preferences}`);
+        console.log(`VirtualTypes: ${stats.virtualTypes}`);
+        console.log(`Types: ${stats.types}`);
+        console.log(`Plugin targets: ${stats.plugins}`);
     }
 
     private walk(
@@ -97,32 +83,38 @@ export class DiBuilder
         }
     }
 
-        private consume(
+    private consume(
         node: XmlNode
     ): void
     {
         let className: string | undefined;
         let kind: DiKind = "type";
 
+        let offset = node.offset;
+        let length = node.length;
+
         switch (node.name) {
 
             case "type": {
 
                 const name =
-                    node.attribute("name")?.value;
+                    node.attribute("name");
 
                 if (!name) {
                     return;
                 }
 
+                offset = name.offset;
+                length = name.length;
+
                 this.index.addType({
-                    name,
+                    name: name.value,
                     uri: node.uri,
-                    offset: node.offset,
-                    length: node.length
+                    offset,
+                    length
                 });
 
-                className = name;
+                className = name.value;
                 kind = "type";
 
                 break;
@@ -130,28 +122,31 @@ export class DiBuilder
 
             case "preference": {
 
-                const forClass =
-                    node.attribute("for")?.value;
+                const forAttribute =
+                    node.attribute("for");
 
-                const typeClass =
-                    node.attribute("type")?.value;
+                const typeAttribute =
+                    node.attribute("type");
 
                 if (
-                    !forClass ||
-                    !typeClass
+                    !forAttribute ||
+                    !typeAttribute
                 ) {
                     return;
                 }
 
+                offset = forAttribute.offset;
+                length = forAttribute.length;
+
                 this.index.addPreference({
-                    for: forClass,
-                    type: typeClass,
+                    for: forAttribute.value,
+                    type: typeAttribute.value,
                     uri: node.uri,
-                    offset: node.offset,
-                    length: node.length
+                    offset,
+                    length
                 });
 
-                className = forClass;
+                className = forAttribute.value;
                 kind = "preference";
 
                 break;
@@ -160,10 +155,10 @@ export class DiBuilder
             case "virtualType": {
 
                 const name =
-                    node.attribute("name")?.value;
+                    node.attribute("name");
 
                 const type =
-                    node.attribute("type")?.value;
+                    node.attribute("type");
 
                 if (
                     !name ||
@@ -172,15 +167,18 @@ export class DiBuilder
                     return;
                 }
 
+                offset = name.offset;
+                length = name.length;
+
                 this.index.addVirtualType({
-                    name,
-                    type,
+                    name: name.value,
+                    type: type.value,
                     uri: node.uri,
-                    offset: node.offset,
-                    length: node.length
+                    offset,
+                    length
                 });
 
-                className = name;
+                className = name.value;
                 kind = "virtualType";
 
                 break;
@@ -189,10 +187,10 @@ export class DiBuilder
             case "plugin": {
 
                 const target =
-                    node.attribute("type")?.value;
+                    node.attribute("type");
 
                 const plugin =
-                    node.attribute("name")?.value;
+                    node.attribute("name");
 
                 if (
                     !target ||
@@ -201,16 +199,19 @@ export class DiBuilder
                     return;
                 }
 
+                offset = target.offset;
+                length = target.length;
+
                 this.index.addPlugin({
-                    name: plugin,
-                    type: target,
-                    plugin,
+                    name: plugin.value,
+                    type: target.value,
+                    plugin: plugin.value,
                     uri: node.uri,
-                    offset: node.offset,
-                    length: node.length
+                    offset,
+                    length
                 });
 
-                className = target;
+                className = target.value;
                 kind = "plugin";
 
                 break;
@@ -224,8 +225,8 @@ export class DiBuilder
             className,
             kind,
             uri: node.uri,
-            offset: node.offset,
-            length: node.length
+            offset,
+            length
         });
     }
 }

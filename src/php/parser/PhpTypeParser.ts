@@ -75,6 +75,12 @@ export class PhpTypeParser extends PhpParserBase {
         keyword: TokenType
     ): PhpType | undefined
     {
+        //
+        // keyword:
+        // class / interface / trait / enum
+        //
+        const keywordToken = this.token();
+
         this.next();
 
         if (this.tokenType() !== TokenType.Identifier) {
@@ -95,8 +101,18 @@ export class PhpTypeParser extends PhpParserBase {
             namespace,
             shortName,
             kind: this.mapKind(keyword),
-            offset: nameToken.offset,
-            length: nameToken.length,
+
+            //
+            // Declaration position.
+            //
+            offset: keywordToken.offset,
+            length: nameToken.offset + nameToken.length - keywordToken.offset,
+
+            //
+            // Class name position.
+            //
+            nameOffset: nameToken.offset,
+            nameLength: nameToken.length,
 
             extends: undefined,
             implements: [],

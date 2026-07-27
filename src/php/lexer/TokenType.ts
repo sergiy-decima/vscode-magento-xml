@@ -26,6 +26,7 @@ export enum TokenType {
     Static,
     Const,
     Variable,
+    String,
     Arrow,
     OpenParen,
     CloseParen,

@@ -50,6 +50,50 @@ export class PhpLexer {
 
         const start = this.pos;
         const ch = this.source[this.pos];
+
+        //
+        // String literal
+        //
+        if (ch === "'" || ch === "\"") {
+
+            const quote = ch;
+
+            this.pos++;
+
+            while (this.pos < this.source.length) {
+
+                //
+                // escaped character
+                //
+                if (
+                    this.source[this.pos] === "\\" &&
+                    this.pos + 1 < this.source.length
+                ) {
+                    this.pos += 2;
+                    continue;
+                }
+
+                //
+                // closing quote
+                //
+                if (this.source[this.pos] === quote) {
+                    this.pos++;
+                    break;
+                }
+
+                this.pos++;
+            }
+
+            this.current = {
+                type: TokenType.String,
+                text: this.source.substring(start, this.pos),
+                offset: start,
+                length: this.pos - start
+            };
+
+            return this.current.type;
+        }
+
         switch (ch) {
             case "\\":
                 this.pos++;
@@ -252,10 +296,6 @@ export class PhpLexer {
         return this.current.offset + this.current.length;
     }
 
-
-
-
-
     // private finish(
     //     token: TokenType,
     //     text: string
@@ -334,6 +374,60 @@ export class PhpLexer {
                     this.pos++;
                 }
                 this.pos += 2;
+                continue;
+            }
+
+            //
+            // single quoted string
+            //
+            if (ch === "'") {
+                this.pos++;
+
+                while (this.pos < this.source.length) {
+
+                    if (
+                        this.source[this.pos] === "\\" &&
+                        this.pos + 1 < this.source.length
+                    ) {
+                        this.pos += 2;
+                        continue;
+                    }
+
+                    if (this.source[this.pos] === "'") {
+                        this.pos++;
+                        break;
+                    }
+
+                    this.pos++;
+                }
+
+                continue;
+            }
+
+            //
+            // double quoted string
+            //
+            if (ch === "\"") {
+                this.pos++;
+
+                while (this.pos < this.source.length) {
+
+                    if (
+                        this.source[this.pos] === "\\" &&
+                        this.pos + 1 < this.source.length
+                    ) {
+                        this.pos += 2;
+                        continue;
+                    }
+
+                    if (this.source[this.pos] === "\"") {
+                        this.pos++;
+                        break;
+                    }
+
+                    this.pos++;
+                }
+
                 continue;
             }
 

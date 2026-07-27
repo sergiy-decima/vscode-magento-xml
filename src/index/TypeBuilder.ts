@@ -70,9 +70,30 @@ export class TypeBuilder {
         //     }
         // }
 
+        // console.log('Opppa!');
+        // for (const type of phpFile.types) {
+        //     console.log(
+        //         type.fqcn,
+        //         type.offset,
+        //         document.content.substring(
+        //             type.offset,
+        //             type.offset + 40
+        //         )
+        //     );
+        // }
+
         this.fileCache.set(document.file, phpFile);
 
         for (const phpType of phpFile.types) {
+
+            // console.log('Ololo!');
+            // console.log({
+            //     class: phpType.fqcn,
+            //     offset: phpType.offset,
+            //     nameOffset: phpType.nameOffset,
+            //     length: phpType.length,
+            //     nameLength: phpType.nameLength
+            // });
 
             this.registry.add(
                 this.factory.create(document.file, phpType)

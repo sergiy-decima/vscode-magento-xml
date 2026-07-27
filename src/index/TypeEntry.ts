@@ -15,7 +15,12 @@ export interface TypeEntry
     fqcn: string;
 
     file: string;
-    
+
+    /**
+     * PHP file location
+     */
+    uri: vscode.Uri;
+
     className: string;
 
     namespace?: string;
@@ -26,21 +31,35 @@ export interface TypeEntry
     kind: PhpTypeKind;
 
     /**
-     * PHP file location
-     */
-    uri: vscode.Uri;
-
-    /**
      * Position of type name in file
      * Offset всередині файлу.
+     *
+     * Початок declaration.
+     *
+     * final class Foo
+     * ^^^^^
      */
     offset: number;
 
     /**
      * Length of type name
      * Довжина токена class/interface/trait => 21
+     * Довжина declaration.
      */
     length: number;
+
+    /**
+     * Початок імені класу.
+     *
+     * final class Foo
+     *             ^^^
+     */
+    nameOffset: number;
+
+    /**
+     * Довжина імені класу.
+     */
+    nameLength: number;
 
     /**
      * Parent class

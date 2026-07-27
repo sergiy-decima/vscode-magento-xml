@@ -5,13 +5,6 @@ import { AbstractDefinitionStrategy } from "./AbstractDefinitionStrategy";
 export class VirtualTypeDefinitionStrategy
     extends AbstractDefinitionStrategy
 {
-    public supports(
-        match: XmlAttributeMatch
-    ): boolean
-    {
-        return match.attribute === "type";
-    }
-
     public async resolve(
         match: XmlAttributeMatch
     ): Promise<vscode.Location | undefined>
@@ -20,8 +13,15 @@ export class VirtualTypeDefinitionStrategy
             return;
         }
 
+        const virtualType =
+            this.diIndex.findVirtualType(match.value);
+
+        if (!virtualType) {
+            return;
+        }
+
         return this.toEntryLocation(
-            this.diIndex.findVirtualType(match.value)
+            this.registry.find(virtualType.type)
         );
     }
 }

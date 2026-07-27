@@ -126,6 +126,13 @@ export class XmlDocumentParser
             ) {
                 const token = this.token();
 
+                // console.log(
+                //     "TEXT TOKEN:",
+                //     JSON.stringify(token.text),
+                //     token.offset,
+                //     token.length
+                // );
+
                 const text = token.text;
 
                 const left = text.search(/\S/);
@@ -143,6 +150,14 @@ export class XmlDocumentParser
 
                     node.textLength =
                         text.length - left - right;
+
+                    // console.log(
+                    //     "NODE TEXT:",
+                    //     node.name,
+                    //     JSON.stringify(node.text),
+                    //     node.textOffset,
+                    //     node.textLength
+                    // );
                 }
 
                 this.next();

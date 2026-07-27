@@ -11,6 +11,7 @@ export class PhpClassDefinitionStrategy
     {
         switch (match.attribute) {
 
+            case "name":
             case "class":
             case "type":
             case "instance":
@@ -33,6 +34,7 @@ export class PhpClassDefinitionStrategy
         if (
             !this.isAttribute(
                 match,
+                "name",
                 "class",
                 "type",
                 "instance",
@@ -42,6 +44,22 @@ export class PhpClassDefinitionStrategy
             )
         ) {
             return;
+        }
+
+        //
+        // <type name="...">
+        // <virtualType name="...">
+        //
+        if (
+            match.attribute === "name" &&
+            (
+                match.tag === "type" ||
+                match.tag === "virtualType"
+            )
+        ) {
+            return this.toEntryLocation(
+                this.registry.find(match.value)
+            );
         }
 
         return this.toEntryLocation(

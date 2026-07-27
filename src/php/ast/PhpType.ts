@@ -25,18 +25,24 @@ export interface PhpType {
     shortName: string;
 
     /**
-     * Offset of the declaration keyword.
-     *
-     * Example: final class Foo^^
+     * Offset of declaration.
      */
     offset: number;
 
     /**
-     * Length of declaration keyword + identifier.
-     *
-     * Example: class Foo
+     * Length of declaration.
      */
     length: number;
+
+    /**
+     * Offset of class/interface/trait/enum name.
+     */
+    nameOffset: number;
+
+    /**
+     * Length of class/interface/trait/enum name.
+     */
+    nameLength: number;
 
     /**
      * Parent class.
@@ -71,9 +77,9 @@ export interface PhpProperty {
 export interface PhpMethod {
     name: string;
     visibility: "public" | "protected" | "private";
-    isStatic: boolean,
-    returnType?: string,
-    parameters: PhpParameter[] ,
+    isStatic: boolean;
+    returnType?: string;
+    parameters: PhpParameter[];
     offset: number;
     length: number;
 }
@@ -85,8 +91,7 @@ export interface PhpParameter {
     length: number;
 }
 
-export interface PhpConstant
-{
+export interface PhpConstant {
     name: string;
     offset: number;
     length: number;

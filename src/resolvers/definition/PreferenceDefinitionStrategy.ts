@@ -13,11 +13,15 @@ export class PreferenceDefinitionStrategy
             return;
         }
 
-        const preferences =
-            this.diIndex.findPreferences(match.value);
+        const preference =
+            this.diIndex.findPreferences(match.value)[0];
+
+        if (!preference) {
+            return;
+        }
 
         return this.toEntryLocation(
-            preferences[0]
+            this.registry.find(preference.for)
         );
     }
 }

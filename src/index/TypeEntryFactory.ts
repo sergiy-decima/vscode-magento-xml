@@ -9,15 +9,23 @@ export class TypeEntryFactory {
     public create(
         file: string,
         type: PhpType
-    ): TypeEntry {
+    ): TypeEntry
+    {
         return {
             fqcn: type.fqcn,
             file,
             uri: vscode.Uri.file(file),
+
             className: type.shortName,
+
             offset: type.offset,
             length: type.length,
+
+            nameOffset: type.nameOffset,
+            nameLength: type.nameLength,
+
             kind: type.kind,
+
             extends: type.extends,
             implements: [...type.implements],
             traits: [...type.traits]
