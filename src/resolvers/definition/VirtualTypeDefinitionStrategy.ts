@@ -7,9 +7,12 @@ export class VirtualTypeDefinitionStrategy
 {
     public async resolve(
         match: XmlAttributeMatch
-    ): Promise<vscode.Location | undefined>
+    ): Promise<vscode.Definition | undefined>
     {
-        if (!this.isAttribute(match, "type")) {
+        if (
+            match.tag !== "virtualType" ||
+            !this.isAttribute(match, "name")
+        ) {
             return;
         }
 
@@ -20,8 +23,17 @@ export class VirtualTypeDefinitionStrategy
             return;
         }
 
+        if (
+            virtualType.references &&
+            virtualType.references.length > 0
+        ) {
+            return this.toEntryLocations(
+                virtualType.references
+            );
+        }
+
         return this.toEntryLocation(
-            this.registry.find(virtualType.type)
+            virtualType
         );
     }
 }

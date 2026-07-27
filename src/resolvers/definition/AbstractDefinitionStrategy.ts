@@ -14,7 +14,7 @@ export abstract class AbstractDefinitionStrategy
 
     public abstract resolve(
         match: XmlAttributeMatch
-    ): Promise<vscode.Location | undefined>;
+    ): Promise<vscode.Definition | undefined>;
 
     protected async toLocation(
         uri: vscode.Uri,
@@ -65,5 +65,28 @@ export abstract class AbstractDefinitionStrategy
             entry.uri,
             entry.nameOffset ?? entry.offset
         );
+    }
+
+    protected async toEntryLocations(
+        entries: Array<{
+            uri: vscode.Uri;
+            offset: number;
+            nameOffset?: number;
+        }>
+    ): Promise<vscode.Location[]>
+    {
+        const locations: vscode.Location[] = [];
+
+        for (const entry of entries) {
+
+            locations.push(
+                await this.toLocation(
+                    entry.uri,
+                    entry.nameOffset ?? entry.offset
+                )
+            );
+        }
+
+        return locations;
     }
 }

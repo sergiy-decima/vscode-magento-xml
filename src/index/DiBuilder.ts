@@ -61,6 +61,7 @@ export class DiBuilder
             );
 
             this.walk(document.root);
+            this.collectVirtualTypeReferences(document.root);
         }
 
         const stats = this.index.stats();
@@ -87,6 +88,33 @@ export class DiBuilder
         node: XmlNode
     ): void
     {
+        //
+        // Спочатку індексуємо використання virtualType:
+        //
+        // <argument xsi:type="object">orderConfig</argument>
+        // <item xsi:type="object">orderConfig</item>
+        //
+        if (
+            (node.name === "argument" || node.name === "item") &&
+            node.attribute("xsi:type")?.value === "object"
+        ) {
+            const objectName = node.text.trim();
+
+            if (objectName.length > 0) {
+
+                this.index.addVirtualTypeReference(
+                    objectName,
+                    {
+                        uri: node.uri,
+                        offset: node.textOffset,
+                        length: node.textLength
+                    }
+                );
+            }
+
+            return;
+        }
+
         let className: string | undefined;
         let kind: DiKind = "type";
 
@@ -175,7 +203,8 @@ export class DiBuilder
                     type: type.value,
                     uri: node.uri,
                     offset,
-                    length
+                    length,
+                    references: []
                 });
 
                 className = name.value;
@@ -228,5 +257,33 @@ export class DiBuilder
             offset,
             length
         });
+    }
+
+    private collectVirtualTypeReferences(
+        node: XmlNode
+    ): void
+    {
+        if (
+            (node.name === "argument" || node.name === "item") &&
+            node.attribute("xsi:type")?.value === "object"
+        ) {
+            const value = node.text.trim();
+
+            if (value.length > 0) {
+
+                this.index.addVirtualTypeReference(
+                    value,
+                    {
+                        uri: node.uri,
+                        offset: node.textOffset,
+                        length: value.length
+                    }
+                );
+            }
+        }
+
+        for (const child of node.children) {
+            this.collectVirtualTypeReferences(child);
+        }
     }
 }

@@ -53,7 +53,7 @@ export class DefinitionResolver
 
     public async resolve(
         match: XmlAttributeMatch
-    ): Promise<vscode.Location | undefined>
+    ): Promise<vscode.Definition | undefined>
     {
         for (const strategy of this.strategies) {
 

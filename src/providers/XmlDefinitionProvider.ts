@@ -97,13 +97,15 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
         switch (match.attribute) {
 
             case "name":
-
-                if (
-                    match.tag === "type" ||
-                    match.tag === "virtualType"
-                ) {
+                if (match.tag === "type") {
                     return this.definitionResolver.resolveObjectValue(
                         match.value
+                    );
+                }
+
+                if (match.tag === "virtualType") {
+                    return this.definitionResolver.resolve(
+                        match
                     );
                 }
 

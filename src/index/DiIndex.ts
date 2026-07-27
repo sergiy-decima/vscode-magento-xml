@@ -124,4 +124,30 @@ export class DiIndex {
             types: this.types.size()
         };
     }
+
+    public addVirtualTypeReference(
+        name: string,
+        reference: {
+            uri: vscode.Uri;
+            offset: number;
+            length: number;
+        }
+    ): void
+    {
+        this.virtualTypes.addReference(
+            name,
+            reference
+        );
+    }
+
+    public findVirtualTypeReferences(
+        name: string
+    ): {
+        uri: vscode.Uri;
+        offset: number;
+        length: number;
+    }[]
+    {
+        return this.virtualTypes.find(name)?.references ?? [];
+    }
 }

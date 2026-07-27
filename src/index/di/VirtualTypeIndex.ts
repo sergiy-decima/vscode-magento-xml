@@ -1,5 +1,12 @@
 import * as vscode from "vscode";
 
+export interface VirtualTypeReference
+{
+    uri: vscode.Uri;
+    offset: number;
+    length: number;
+}
+
 export interface VirtualTypeEntry
 {
     name: string;
@@ -8,12 +15,9 @@ export interface VirtualTypeEntry
     uri: vscode.Uri;
     offset: number;
     length: number;
-}
 
-// export interface VirtualTypeEntry extends DiLocation {
-//     name: string;
-//     type: string;
-// }
+    references: VirtualTypeReference[];
+}
 
 export class VirtualTypeIndex
 {
@@ -28,7 +32,24 @@ export class VirtualTypeIndex
         entry: VirtualTypeEntry
     ): void
     {
-        this.map.set(entry.name, entry);
+        this.map.set(
+            entry.name,
+            entry
+        );
+    }
+
+    public addReference(
+        name: string,
+        reference: VirtualTypeReference
+    ): void
+    {
+        const entry = this.map.get(name);
+
+        if (!entry) {
+            return;
+        }
+
+        entry.references.push(reference);
     }
 
     public find(

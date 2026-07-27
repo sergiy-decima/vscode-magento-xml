@@ -5,5 +5,5 @@ export interface IDefinitionStrategy
 {
     resolve(
         match: XmlAttributeMatch
-    ): Promise<vscode.Location | undefined>;
+    ): Promise<vscode.Definition | undefined>;
 }
