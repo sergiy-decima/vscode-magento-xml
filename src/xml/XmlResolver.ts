@@ -77,10 +77,11 @@ export class XmlResolver
             ownerItem: this.closest(node, "item"),
 
             argumentType:
-                this.closest(node, "argument")
+                node.attribute("xsi:type")?.value ??
+                this.closest(node, "item")
                     ?.attribute("xsi:type")
                     ?.value ??
-                this.closest(node, "item")
+                this.closest(node, "argument")
                     ?.attribute("xsi:type")
                     ?.value,
 

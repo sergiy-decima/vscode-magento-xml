@@ -30,6 +30,23 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
             document.offsetAt(position)
         );
 
+        // console.log(
+        //     "CONTEXT",
+        //     context.inText,
+        //     context.argumentType,
+        //     context.ownerItem?.name,
+        //     context.ownerArgument?.name
+        // );
+
+        // console.log({
+        //     inText: context.inText,
+        //     argumentType: context.argumentType,
+        //     ownerItem: context.ownerItem?.name,
+        //     ownerArgument: context.ownerArgument?.name,
+        //     node: context.node?.name,
+        //     text: context.node?.text
+        // });
+
         //
         // <argument xsi:type="object">Class</argument>
         // <item xsi:type="object">Class</item>
