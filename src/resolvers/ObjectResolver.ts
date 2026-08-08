@@ -16,22 +16,38 @@ export class ObjectResolver
         name: string
     ): Promise<vscode.Location | undefined>
     {
+        console.log("========================================");
+        console.log("[ObjectResolver] NAME:", JSON.stringify(name));
+
         //
         // virtualType
         //
         const virtualType =
             this.diIndex.findVirtualType(name);
 
+        console.log(
+            "[ObjectResolver] virtualType:",
+            virtualType
+        );
+
         if (virtualType) {
 
-            return new vscode.Location(
-                virtualType.uri,
+            const position =
                 await this.documents.position(
                     virtualType.uri,
                     virtualType.offset
-                )
+                );
+
+            console.log(
+                "[ObjectResolver] virtualType POSITION:",
+                position.line,
+                position.character
             );
 
+            return new vscode.Location(
+                virtualType.uri,
+                position
+            );
         }
 
         //
@@ -40,16 +56,31 @@ export class ObjectResolver
         const preferences =
             this.diIndex.findPreferences(name);
 
+        console.log(
+            "[ObjectResolver] preferences:",
+            preferences.length
+        );
+
         if (preferences.length > 0) {
 
-            return new vscode.Location(
-                preferences[0].uri,
+            const preference = preferences[0];
+
+            const position =
                 await this.documents.position(
-                    preferences[0].uri,
-                    preferences[0].offset
-                )
+                    preference.uri,
+                    preference.offset
+                );
+
+            console.log(
+                "[ObjectResolver] preference POSITION:",
+                position.line,
+                position.character
             );
 
+            return new vscode.Location(
+                preference.uri,
+                position
+            );
         }
 
         //
@@ -58,16 +89,31 @@ export class ObjectResolver
         const plugins =
             this.diIndex.findPlugins(name);
 
+        console.log(
+            "[ObjectResolver] plugins:",
+            plugins.length
+        );
+
         if (plugins.length > 0) {
 
-            return new vscode.Location(
-                plugins[0].uri,
+            const plugin = plugins[0];
+
+            const position =
                 await this.documents.position(
-                    plugins[0].uri,
-                    plugins[0].offset
-                )
+                    plugin.uri,
+                    plugin.offset
+                );
+
+            console.log(
+                "[ObjectResolver] plugin POSITION:",
+                position.line,
+                position.character
             );
 
+            return new vscode.Location(
+                plugin.uri,
+                position
+            );
         }
 
         //
@@ -76,17 +122,88 @@ export class ObjectResolver
         const type =
             this.registry.find(name);
 
+        console.log(
+            "[ObjectResolver] registry.find:",
+            type
+        );
+
         if (type) {
 
-            return new vscode.Location(
-                type.uri,
-                await this.documents.position(
-                    type.uri,
+            const document =
+                await this.documents.open(type.uri);
+
+            const start =
+                document.positionAt(
                     type.nameOffset
+                );
+
+            const end =
+                document.positionAt(
+                    type.nameOffset +
+                    type.nameLength
+                );
+
+            console.log(
+                "[ObjectResolver] FOUND:",
+                type.fqcn,
+                type.file
+            );
+
+            console.log(
+                "[ObjectResolver] NAME OFFSET:",
+                type.nameOffset
+            );
+
+            console.log(
+                "[ObjectResolver] NAME LENGTH:",
+                type.nameLength
+            );
+
+            console.log(
+                "[ObjectResolver] START:",
+                start.line,
+                start.character
+            );
+
+            console.log(
+                "[ObjectResolver] END:",
+                end.line,
+                end.character
+            );
+
+            console.log(
+                "[ObjectResolver] SOURCE TEXT:",
+                JSON.stringify(
+                    document.getText(
+                        new vscode.Range(start, end)
+                    )
                 )
             );
 
+            const location =
+                new vscode.Location(
+                    type.uri,
+                    new vscode.Range(
+                        start,
+                        end
+                    )
+                );
+
+            console.log(
+                "[ObjectResolver] LOCATION:",
+                location
+            );
+
+            console.log("========================================");
+
+            return location;
         }
+
+        console.log(
+            "[ObjectResolver] NOT FOUND"
+        );
+
+        console.log("========================================");
 
         return;
     }

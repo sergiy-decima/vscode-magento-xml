@@ -12,11 +12,14 @@ export abstract class AbstractPhpTypeCompletionStrategy
 {
     public abstract readonly key: string;
 
-    protected abstract readonly phpKinds: readonly PhpTypeKind[];
+    protected abstract readonly phpKinds:
+        readonly PhpTypeKind[];
 
-    protected abstract readonly completionKind: vscode.CompletionItemKind;
+    protected abstract readonly completionKind:
+        vscode.CompletionItemKind;
 
-    protected abstract readonly detail: string;
+    protected abstract readonly detail:
+        string;
 
     constructor(
         protected readonly registry: TypeRegistry,
@@ -32,20 +35,115 @@ export abstract class AbstractPhpTypeCompletionStrategy
         let search = "";
 
         if (xml.attribute) {
-            search = xml.attribute.value;
+
+            search =
+                xml.attribute.value;
+
         } else if (xml.inText) {
-            search = xml.node?.text.trim() ?? "";
+
+            search =
+                xml.node?.text.trim() ?? "";
         }
 
-        return this.registry
-            .search(search, this.phpKinds)
-            .map(type =>
+        console.log(
+            "========================================"
+        );
+
+        console.log(
+            "COMPLETION SEARCH:",
+            search
+        );
+
+        console.log(
+            "COMPLETION PHP KINDS:",
+            this.phpKinds
+        );
+
+        const exact =
+            this.registry.find(search);
+
+        console.log(
+            "EXACT REGISTRY FIND:",
+            exact
+                ? {
+                    fqcn: exact.fqcn,
+                    className: exact.className,
+                    namespace: exact.namespace,
+                    kind: exact.kind,
+                    file: exact.file
+                }
+                : "NOT FOUND"
+        );
+
+        const searchResult =
+            this.registry.search(
+                search,
+                this.phpKinds
+            );
+
+        console.log(
+            "REGISTRY SEARCH RESULT:",
+            searchResult.length
+        );
+
+        for (const type of searchResult.slice(0, 20)) {
+
+            console.log(
+                "MATCH:",
+                type.fqcn,
+                type.className,
+                type.kind
+            );
+        }
+
+        /**
+         * Additional diagnostic:
+         * find by short class name.
+         */
+        const shortName =
+            search.includes("\\")
+                ? search.substring(
+                    search.lastIndexOf("\\") + 1
+                )
+                : search;
+
+        const shortResult =
+            this.registry.findByShortName(
+                shortName
+            );
+
+        console.log(
+            "SHORT NAME:",
+            shortName
+        );
+
+        console.log(
+            "SHORT NAME RESULT:",
+            shortResult.length
+        );
+
+        for (const type of shortResult.slice(0, 20)) {
+
+            console.log(
+                "SHORT MATCH:",
+                type.fqcn,
+                type.className,
+                type.kind
+            );
+        }
+
+        console.log(
+            "========================================"
+        );
+
+        return searchResult.map(
+            type =>
                 this.createCompletionItem(
                     document,
                     xml,
                     type
                 )
-            );
+        );
     }
 
     protected createCompletionItem(

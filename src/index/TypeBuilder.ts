@@ -9,94 +9,148 @@ import { PhpTokenStream } from "../php/parser/PhpTokenStream";
 import { PhpFileParser } from "../php/parser/PhpFileParser";
 import { PhpFileCache } from "../php/cache/PhpFileCache";
 import { MemberRegistry } from "./MemberRegistry";
-import { MemberKind } from "./MemberEntry";
 import { MemberEntryFactory } from "./MemberEntryFactory";
 
-/**
- * Координує процес побудови.
- * Будує реєстр типів.
- * Обходить файли, будує/наповнює індекс - створює записи
- * 
- * Builds PHP type entry (index).
- * PSR-4 roots -> PHP files -> PhpType -> TypeEntry
- * Workspace -> PHP files -> PhpLexer -> PhpTokenStream -> PhpTypeParser -> TypeEntryFactory -> TypeRegistry
- */
 export class TypeBuilder {
     private readonly reader = new TypeDocumentReader();
     private readonly factory = new TypeEntryFactory();
     private readonly memberFactory = new MemberEntryFactory();
 
-   public constructor(
+    public constructor(
         private readonly registry: TypeRegistry,
         private readonly members: MemberRegistry,
         private readonly fileCache: PhpFileCache
     ) {
     }
 
-    /**
-     * Full workspace indexing.
-     * Повне будування індексу.
-     * Будує індекс класів з PSR-4 roots
-     * Build type registry from PSR-4 roots
-     */
-    public async build(source: TypeIndexSource): Promise<void> {
+    public async build(
+        source: TypeIndexSource
+    ): Promise<void>
+    {
         this.registry.clear();
         this.members.clear();
         this.fileCache.clear();
+
+        let files = 0;
+
         for await (const sourceEntry of source.entries()) {
-            await this.buildFile(sourceEntry.file);
+            files++;
+
+            await this.buildFile(
+                sourceEntry.file
+            );
         }
-        console.log(`Indexed PHP types: ${this.registry.size()}`);
-        console.log(`File cache size: ${this.fileCache.size()}`);
+
+        console.log(
+            `[TypeBuilder] Indexed files: ${files}`
+        );
+
+        console.log(
+            `[TypeBuilder] Indexed PHP types: ${this.registry.size()}`
+        );
+
+        console.log(
+            `[TypeBuilder] File cache size: ${this.fileCache.size()}`
+        );
+
+        const target =
+            "Zumiez\\AddressValidation\\Model\\WebapiConfigProvider";
+
+        const targetType =
+            this.registry.find(target);
+
+        console.log(
+            "[TypeBuilder] TARGET TYPE:",
+            targetType
+        );
+
+        if (!targetType) {
+            console.log(
+                "[TypeBuilder] TARGET SHORT NAME:",
+                this.registry.findByShortName(
+                    "WebapiConfigProvider"
+                )
+            );
+        }
     }
 
-    /**
-     * Rebuild single PHP file.
-     * Індексує один PHP-файл.
-     * Index a single PHP file.
-     */
-    public async buildFile(file: string): Promise<void> {
-        const document = await this.reader.read(file);
-        const lexer = new PhpLexer(document.content);
-        const stream =new PhpTokenStream(lexer);
-        const parser = new PhpFileParser(stream);
-        const phpFile = parser.parse();
+    public async buildFile(
+        file: string
+    ): Promise<void>
+    {
+        const document =
+            await this.reader.read(file);
 
-        // for (const type of phpFile.types) {
-        //     if ('Magento\\Framework\\App\\Request\\Http' == type.fqcn) {
-        //     console.log("TYPE:", type.fqcn);
-        //     console.log("EXTENDS:", type.extends);
-        //     console.log("IMPLEMENTS:", type.implements);
-        //     }
-        // }
+        const lexer =
+            new PhpLexer(document.content);
 
-        // console.log('Opppa!');
-        // for (const type of phpFile.types) {
-        //     console.log(
-        //         type.fqcn,
-        //         type.offset,
-        //         document.content.substring(
-        //             type.offset,
-        //             type.offset + 40
-        //         )
-        //     );
-        // }
+        const stream =
+            new PhpTokenStream(lexer);
 
-        this.fileCache.set(document.file, phpFile);
+        const parser =
+            new PhpFileParser(stream);
+
+        const phpFile =
+            parser.parse();
+
+        this.fileCache.set(
+            document.file,
+            phpFile
+        );
+
+        const targetFile =
+            file.endsWith(
+                "Zumiez/AddressValidation/Model/WebapiConfigProvider.php"
+            );
+
+        if (targetFile) {
+
+            console.log(
+                "========================================"
+            );
+
+            console.log(
+                "[TypeBuilder] TARGET FILE:",
+                file
+            );
+
+            console.log(
+                "[TypeBuilder] TARGET NAMESPACE:",
+                phpFile.namespace
+            );
+
+            console.log(
+                "[TypeBuilder] TARGET TYPES:",
+                phpFile.types.map(type => ({
+                    fqcn: type.fqcn,
+                    namespace: type.namespace,
+                    shortName: type.shortName,
+                    kind: type.kind,
+                    offset: type.offset,
+                    nameOffset: type.nameOffset
+                }))
+            );
+
+            console.log(
+                "[TypeBuilder] TARGET SOURCE:",
+                document.content.substring(
+                    0,
+                    1000
+                )
+            );
+
+            console.log(
+                "========================================"
+            );
+        }
 
         for (const phpType of phpFile.types) {
 
-            // console.log('Ololo!');
-            // console.log({
-            //     class: phpType.fqcn,
-            //     offset: phpType.offset,
-            //     nameOffset: phpType.nameOffset,
-            //     length: phpType.length,
-            //     nameLength: phpType.nameLength
-            // });
-
             this.registry.add(
-                this.factory.create(document.file, phpType)
+                this.factory.create(
+                    document.file,
+                    phpType
+                )
             );
 
             const members =
@@ -109,13 +163,18 @@ export class TypeBuilder {
                 this.members.add(member);
             }
         }
-
-        // console.log("Members:", this.members);
     }
 
-    public removeFile(file: string): void {
+    public removeFile(
+        file: string
+    ): void
+    {
         this.registry.removeByFile(file);
+
         this.fileCache.remove(file);
-        console.log(`[Index] Deleted ${file}`);
+
+        console.log(
+            `[Index] Deleted ${file}`
+        );
     }
 }

@@ -35,14 +35,15 @@ export class XmlResolver
     {
         const node = document.findNode(offset);
 
-        // console.log("OFFSET:", offset);
-        // console.log("NODE:", node?.name);
-        // console.log("TEXT:", node?.text);
-        // console.log(
-        //     "TEXT RANGE:",
-        //     node?.textOffset,
-        //     node?.textLength
-        // );
+        console.log('XmlResolver.resolve()');
+        console.log({
+            node: node?.name,
+            offset,
+            text: node?.text,
+            textOffset: node?.textOffset,
+            textLength: node?.textLength,
+            containsText: node?.containsText(offset)
+        });
 
         if (!node) {
             return {

@@ -7,14 +7,20 @@ import { TypeEntry } from "./TypeEntry";
  */
 export class TypeRegistry 
 {
-    private readonly map = new Map<string, TypeEntry>();
-    private readonly fileMap = new Map<string, Set<string>>();
-    private readonly shortNameMap = new Map<string, Set<string>>();
+    private readonly map =
+        new Map<string, TypeEntry>();
+
+    private readonly fileMap =
+        new Map<string, Set<string>>();
+
+    private readonly shortNameMap =
+        new Map<string, Set<string>>();
 
     /**
      * Remove all indexed data.
      */
-    public clear(): void {
+    public clear(): void
+    {
         this.map.clear();
         this.fileMap.clear();
         this.shortNameMap.clear();
@@ -23,98 +29,185 @@ export class TypeRegistry
     /**
      * Add type entry.
      */
-    public add(entry: TypeEntry): void {
-        this.map.set(entry.fqcn, entry);
-        let types = this.fileMap.get(entry.file); // file -> fqcn
-        if (!types) {
-            types = new Set<string>();
-            this.fileMap.set(entry.file, types);
-        }
-        types.add(entry.fqcn);
+    public add(
+        entry: TypeEntry
+    ): void
+    {
+        this.map.set(
+            entry.fqcn,
+            entry
+        );
 
-        // shortName -> fqcn
-        let shortTypes = this.shortNameMap.get(entry.className);
-        if (!shortTypes) {
-            shortTypes = new Set<string>();
-            this.shortNameMap.set(entry.className, shortTypes);
+        let types =
+            this.fileMap.get(entry.file);
+
+        if (!types) {
+
+            types = new Set<string>();
+
+            this.fileMap.set(
+                entry.file,
+                types
+            );
         }
-        shortTypes.add(entry.fqcn);
+
+        types.add(
+            entry.fqcn
+        );
+
+        let shortTypes =
+            this.shortNameMap.get(entry.className);
+
+        if (!shortTypes) {
+
+            shortTypes = new Set<string>();
+
+            this.shortNameMap.set(
+                entry.className,
+                shortTypes
+            );
+        }
+
+        shortTypes.add(
+            entry.fqcn
+        );
     }
 
     /**
      * Check type existence.
      */
-    public has(fqcn: string): boolean {
+    public has(
+        fqcn: string
+    ): boolean
+    {
         return this.map.has(fqcn);
     }
 
-    public hasFile(file: string): boolean {
+    public hasFile(
+        file: string
+    ): boolean
+    {
         return this.fileMap.has(file);
     }
 
     /**
      * Find by FQCN.
      */
-    public find(fqcn: string): TypeEntry | undefined {
+    public find(
+        fqcn: string
+    ): TypeEntry | undefined
+    {
         return this.map.get(fqcn);
     }
 
     /**
      * Find all types from file.
      */
-    public findByFile(file: string): TypeEntry[] {
-        const types = this.fileMap.get(file);
+    public findByFile(
+        file: string
+    ): TypeEntry[]
+    {
+        const types =
+            this.fileMap.get(file);
+
         if (!types) {
             return [];
         }
 
         return [...types]
-            .map( fqcn => this.map.get(fqcn) )
-            .filter( (entry): entry is TypeEntry => entry !== undefined );
+            .map(
+                fqcn =>
+                    this.map.get(fqcn)
+            )
+            .filter(
+                (entry): entry is TypeEntry =>
+                    entry !== undefined
+            );
     }
 
     /**
      * Find by short class name.
      *
-     * Example: State
-     * returns: Magento\Framework\App\State
+     * Example:
+     *
+     * State
+     *
+     * returns:
+     *
+     * Magento\Framework\App\State
      */
-    public findByShortName(name: string): TypeEntry[] {
-        const types = this.shortNameMap.get(name);
+    public findByShortName(
+        name: string
+    ): TypeEntry[]
+    {
+        const types =
+            this.shortNameMap.get(name);
+
         if (!types) {
             return [];
         }
 
         return [...types]
-            .map(fqcn => this.map.get(fqcn))
+            .map(
+                fqcn =>
+                    this.map.get(fqcn)
+            )
             .filter(
-                (entry): entry is TypeEntry => entry !== undefined
+                (entry): entry is TypeEntry =>
+                    entry !== undefined
             );
     }
 
     /**
      * Remove type by FQCN.
      */
-    public remove(fqcn: string): boolean {
-        const entry = this.map.get(fqcn);
+    public remove(
+        fqcn: string
+    ): boolean
+    {
+        const entry =
+            this.map.get(fqcn);
+
         if (!entry) {
             return false;
         }
-        
-        this.map.delete(fqcn);
 
-        const types = this.fileMap.get(entry.file);
-        types?.delete(fqcn);
+        this.map.delete(
+            fqcn
+        );
+
+        const types =
+            this.fileMap.get(
+                entry.file
+            );
+
+        types?.delete(
+            fqcn
+        );
+
         if (types?.size === 0) {
-            this.fileMap.delete(entry.file);
+
+            this.fileMap.delete(
+                entry.file
+            );
         }
 
-        // remove from short name index
-        const shortTypes = this.shortNameMap.get(entry.className);
+        const shortTypes =
+            this.shortNameMap.get(
+                entry.className
+            );
+
         if (shortTypes) {
-            shortTypes.delete(fqcn);
+
+            shortTypes.delete(
+                fqcn
+            );
+
             if (shortTypes.size === 0) {
-                this.shortNameMap.delete(entry.className);
+
+                this.shortNameMap.delete(
+                    entry.className
+                );
             }
         }
 
@@ -124,70 +217,132 @@ export class TypeRegistry
     /**
      * Remove all types belonging to file.
      */
-    public removeByFile(file: string): void {
-        const types = this.fileMap.get(file);
+    public removeByFile(
+        file: string
+    ): void
+    {
+        const types =
+            this.fileMap.get(file);
+
         if (!types) {
             return;
         }
 
         for (const fqcn of types) {
-            this.map.delete(fqcn);
+
+            const entry =
+                this.map.get(fqcn);
+
+            this.map.delete(
+                fqcn
+            );
+
+            if (entry) {
+
+                const shortTypes =
+                    this.shortNameMap.get(
+                        entry.className
+                    );
+
+                shortTypes?.delete(
+                    fqcn
+                );
+
+                if (
+                    shortTypes &&
+                    shortTypes.size === 0
+                ) {
+                    this.shortNameMap.delete(
+                        entry.className
+                    );
+                }
+            }
         }
-        this.fileMap.delete(file);
+
+        this.fileMap.delete(
+            file
+        );
     }
 
     /**
      * All indexed entries.
      */
-    public all(): readonly TypeEntry[] {
-        return [...this.map.values()];
+    public all(): readonly TypeEntry[]
+    {
+        return [
+            ...this.map.values()
+        ];
     }
 
     /**
      * Map iterator.
      */
-    public entries(): IterableIterator<[string, TypeEntry]> {
+    public entries():
+        IterableIterator<[string, TypeEntry]>
+    {
         return this.map.entries();
     }
 
     /**
      * Value iterator.
      */
-    public values(): IterableIterator<TypeEntry> {
+    public values():
+        IterableIterator<TypeEntry>
+    {
         return this.map.values();
     }
 
     /**
-     * Total number of indexed types - entities
-     *
-     * @returns {number}
+     * Total number of indexed types.
      */
-    public size(): number {
+    public size(): number
+    {
         return this.map.size;
     }
 
-    /**
-     * @returns 
-     */
-    public files(): IterableIterator<string> {
+    public files():
+        IterableIterator<string>
+    {
         return this.fileMap.keys();
     }
 
-    public findByKind(kind: PhpTypeKind): TypeEntry[]
+    public findByKind(
+        kind: PhpTypeKind
+    ): TypeEntry[]
     {
-        return [...this.map.values()].filter(
-            entry => entry.kind === kind
+        return [
+            ...this.map.values()
+        ].filter(
+            entry =>
+                entry.kind === kind
         );
     }
 
+    /**
+     * Search types.
+     *
+     * Supports:
+     *
+     * 1. Empty search
+     * 2. FQCN prefix
+     * 3. Namespace part
+     * 4. Short class name
+     * 5. Partial class name
+     */
     public search(
         prefix: string,
         kinds?: readonly PhpTypeKind[]
     ): TypeEntry[]
     {
-        const search = prefix.toLowerCase();
+        const search =
+            prefix
+                .trim()
+                .toLowerCase();
+
         const result: TypeEntry[] = [];
+
         for (const entry of this.map.values()) {
+
             if (
                 kinds &&
                 !kinds.includes(entry.kind)
@@ -195,12 +350,89 @@ export class TypeRegistry
                 continue;
             }
 
-            const fqcn = entry.fqcn.toLowerCase();
+            if (search.length === 0) {
+
+                result.push(
+                    entry
+                );
+
+                continue;
+            }
+
+            const fqcn =
+                entry.fqcn.toLowerCase();
+
+            const className =
+                entry.className.toLowerCase();
+
+            /**
+             * Exact FQCN.
+             */
+            if (fqcn === search) {
+
+                result.push(
+                    entry
+                );
+
+                continue;
+            }
+
+            /**
+             * FQCN starts with search.
+             *
+             * Example:
+             *
+             * Magento\Catalog
+             */
+            if (fqcn.startsWith(search)) {
+
+                result.push(
+                    entry
+                );
+
+                continue;
+            }
+
+            /**
+             * Search after namespace separator.
+             *
+             * Example:
+             *
+             * Validator
+             *
+             * matches:
+             *
+             * Foo\Model\Validator
+             */
             if (
-                fqcn.startsWith(search) ||
-                fqcn.includes("\\" + search)
+                fqcn.includes(
+                    "\\" + search
+                )
             ) {
-                result.push(entry);
+
+                result.push(
+                    entry
+                );
+
+                continue;
+            }
+
+            /**
+             * Short class name.
+             *
+             * Example:
+             *
+             * OrderValidator
+             */
+            if (
+                className.includes(search)
+            ) {
+
+                result.push(
+                    entry
+                );
+
+                continue;
             }
         }
 
@@ -212,7 +444,9 @@ export class TypeRegistry
     ): TypeEntry[]
     {
         const result: TypeEntry[] = [];
-        const visited = new Set<string>();
+
+        const visited =
+            new Set<string>();
 
         this.collectImplementations(
             fqcn,
@@ -229,13 +463,19 @@ export class TypeRegistry
         visited: Set<string>
     ): void
     {
-        if (visited.has(fqcn)) {
+        if (
+            visited.has(fqcn)
+        ) {
             return;
         }
 
-        visited.add(fqcn);
+        visited.add(
+            fqcn
+        );
 
-        for (const entry of this.map.values()) {
+        for (
+            const entry of this.map.values()
+        ) {
 
             if (
                 entry.extends !== fqcn &&
@@ -244,11 +484,10 @@ export class TypeRegistry
                 continue;
             }
 
-            result.push(entry);
+            result.push(
+                entry
+            );
 
-            //
-            // Find subclasses / derived implementations
-            //
             this.collectImplementations(
                 entry.fqcn,
                 result,

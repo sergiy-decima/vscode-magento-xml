@@ -30,23 +30,6 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
             document.offsetAt(position)
         );
 
-        // console.log(
-        //     "CONTEXT",
-        //     context.inText,
-        //     context.argumentType,
-        //     context.ownerItem?.name,
-        //     context.ownerArgument?.name
-        // );
-
-        // console.log({
-        //     inText: context.inText,
-        //     argumentType: context.argumentType,
-        //     ownerItem: context.ownerItem?.name,
-        //     ownerArgument: context.ownerArgument?.name,
-        //     node: context.node?.name,
-        //     text: context.node?.text
-        // });
-
         //
         // <argument xsi:type="object">Class</argument>
         // <item xsi:type="object">Class</item>
@@ -63,8 +46,38 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
                 owner &&
                 owner.text.trim().length > 0
             ) {
-                return this.definitionResolver.resolveObjectValue(
-                    owner.text.trim()
+                const location =
+                    await this.definitionResolver.resolveObjectValue(
+                        owner.text.trim()
+                    );
+
+                if (!location) {
+                    return;
+                }
+
+                // const targetDocument =
+                //     await vscode.workspace.openTextDocument(
+                //         location.uri
+                //     );
+
+                // const targetOffset =
+                //     targetDocument.offsetAt(
+                //         location.range.start
+                //     );
+
+                // const targetEntry =
+                //     this.xmlCache;
+
+                console.log(
+                    "[XML DEFINITION] TARGET:",
+                    location.uri.fsPath,
+                    location.range.start.line,
+                    location.range.start.character
+                );
+
+                return new vscode.Location(
+                    location.uri,
+                    location.range
                 );
             }
         }
@@ -109,11 +122,12 @@ export class XmlDefinitionProvider implements vscode.DefinitionProvider
         }
 
         //
-        // Будь-який XML-атрибут
+        // XML attributes
         //
         switch (match.attribute) {
 
             case "name":
+
                 if (match.tag === "type") {
                     return this.definitionResolver.resolveObjectValue(
                         match.value
